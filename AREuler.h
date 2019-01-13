@@ -9,8 +9,8 @@ class Probleme1D
 
 protected:
   std::vector<std::vector<double>> _U, _flows;
-  double _nbr_elements, _nbr_variables, _delta_x, _delta_t;
-  int _choix_flux;
+  double _nbr_elements, _nbr_variables, _delta_x, _delta_t, _t_final;
+  int _flow_choice;
 
 public:
   Probleme1D();
@@ -20,6 +20,7 @@ public:
   virtual std::vector<double> RightBoundFlow() = 0;
   virtual void UpdateFlows() = 0;
   void ClassicGodunovIteration();
+  virtual void ClassicGodunovMainLoop() = 0;
 
 };
 
@@ -28,8 +29,9 @@ class TroisVariables : public Probleme1D
 {
 
 public:
-  TroisVariables(int nbr_elements, double delta_t, int choix_flux);
+  TroisVariables(int nbr_elements, double delta_t, double t_final, int flow_choice);
   std::vector<double> LeftBoundFlow();
   std::vector<double> RightBoundFlow();
   void UpdateFlows();
+  void ClassicGodunovMainLoop();
 };

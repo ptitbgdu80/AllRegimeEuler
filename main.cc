@@ -2,11 +2,11 @@
 
 int main()
 {
-  int choix_flux = left_elem_flow;
+  int flow_choice = left_elem_flow;
 
-  TroisVariables test(50, 0.01, choix_flux);
+  TroisVariables test(500, 0.0001, 2., flow_choice);
 
-  test.ClassicGodunovIteration();
+  test.ClassicGodunovMainLoop();
 
   return 0;
 }
