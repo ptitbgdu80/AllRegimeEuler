@@ -96,6 +96,7 @@ void Probleme1D::AcousticStep()
   for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
   {
     double inverse_Lj = 1./(1. - coeff*flow_contribution[elem_j][0]);
+
   }
 
 }
