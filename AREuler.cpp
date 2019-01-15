@@ -10,6 +10,7 @@ Probleme1D::Probleme1D(int nbr_elements, double delta_t, double t_final, std::st
 
   _U.resize(nbr_elements); // U contient les variables conservatives (rho, rho*u, rho*v, rho*E)
   _u.resize(nbr_elements);
+  _a.resize(nbr_elements + 1);
   _u_star.resize(nbr_elements + 1); //_u_star[j] = u*_(j-1/2) (u* sur l'interface gauche de l'élément contenant xj)
   _L.resize(nbr_elements); // L[j] = 1 + Dt/Dx*(u*_(j+1/2) - u*_(j-1/2))
   _Pi.resize(nbr_elements); // Pi contient les pressions calculées à partir de U
@@ -26,10 +27,10 @@ Probleme1D::Probleme1D(int nbr_elements, double delta_t, double t_final, std::st
   for (int elem_j = 0; elem_j < nbr_elements; elem_j++)
   {
     _U[elem_j].resize(4);
-    for (int jVar = 0; jVar < 5; jVar++)
-    {
-      _U[elem_j][jVar] = 10;
-    }
+    _U[elem_j][0] = 1.2;
+    _U[elem_j][1] = 10.;
+    _U[elem_j][2] = 5.;
+    _U[elem_j][3] = 120.;
   }
 }
 
@@ -54,13 +55,17 @@ void Probleme1D::Update_Pi()
 {
   for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
   {
-    _Pi[elem_j] = 0.4*(_U[elem_j][3] - (_U[elem_j][1]*_U[elem_j][1] + _U[elem_j][2]*_U[elem_j][2])/_U[elem_j][0]); // p = (gamma - 1)*rho*e avec gamma = 1.4 et e = E - |u²|
+    _Pi[elem_j] = 0.4*(_U[elem_j][3] - (_U[elem_j][1]*_U[elem_j][1] + _U[elem_j][2]*_U[elem_j][2])/(2*_U[elem_j][0])); // p = (gamma - 1)*rho*e avec gamma = 1.4 et e = E - |u²|
   }
+}
+
+void Probleme1D::Update_a()
+{
+  
 }
 
 void Probleme1D::Update_u_star()
 {
-  double a = 1.;
   _u_star[0] = 0.5*(_u[0] + _left_bound_u - (_Pi[0] - _left_bound_Pi)/a);
   for (int elem_j = 1; elem_j < _nbr_elements; elem_j++)
   {
@@ -71,7 +76,6 @@ void Probleme1D::Update_u_star()
 
 void Probleme1D::Update_Pi_star()
 {
-  double a = 1.;
   _Pi_star[0] = 0.5*(_Pi[0] + _left_bound_Pi - a*(_u[0] - _left_bound_u));
   for (int elem_j = 1; elem_j < _nbr_elements; elem_j++)
   {
@@ -94,7 +98,7 @@ std::vector<double> Probleme1D::LeftBoundValue()
   rho = 1.2; //masse volumique de l'air
   u = 10.;
   v = 5.;
-  E = 1.;
+  E = 100.;
   return {rho, rho*u, rho*v, rho*E};
 }
 
@@ -104,7 +108,7 @@ std::vector<double> Probleme1D::RightBoundValue()
   rho = 1.2; //masse volumique de l'air
   u = 10.;
   v = 5.;
-  E = 1.;
+  E = 100.;
   return {rho, rho*u, rho*v, rho*E};
 }
 

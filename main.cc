@@ -3,7 +3,7 @@
 int main()
 {
   int nbr_elements = 10;
-  double delta_t = 0.1;
+  double delta_t = 0.01;
   double t_final = 2.;
   std::string file_name = "resultats";
 

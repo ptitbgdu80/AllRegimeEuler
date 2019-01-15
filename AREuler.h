@@ -8,7 +8,7 @@ class Probleme1D
 
 protected:
   std::vector<std::vector<double>> _U;
-  std::vector<double> _u, _u_star, _L, _Pi, _Pi_star, _left_bound_U, _right_bound_U;
+  std::vector<double> _u, _u_star, _L, _Pi, _Pi_star, _left_bound_U, _right_bound_U, _a;
   double _nbr_elements, _Dt_on_Dx, _t_final, _left_bound_u, _right_bound_u, _left_bound_Pi, _right_bound_Pi;
   std::string _file_name;
 
