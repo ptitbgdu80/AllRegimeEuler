@@ -7,7 +7,7 @@ class Probleme1D
 {
 
 protected:
-  std::vector<std::vector<double>> _U, _W;
+  std::vector<std::vector<double>> _U, _L;
   double _nbr_elements, _delta_x, _delta_t, _t_final;
   std::string _file_name;
 
