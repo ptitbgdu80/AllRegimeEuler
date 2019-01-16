@@ -15,8 +15,11 @@ protected:
 public:
   Probleme1D(int nbr_elements, double delta_t, double t_final, std::string file_name);
   ~Probleme1D();
+  double PressureToRhoE(double p, double rho, double rho_u, double rho_v);
+  double test(double p, double rho, double rho_u, double rho_v);
   void Update_u();
   void Update_Pi();
+  void Update_a();
   void Update_u_star();
   void Update_Pi_star();
   void Update_L();
