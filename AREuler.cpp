@@ -6,7 +6,7 @@ Probleme1D::Probleme1D(int nbr_elements, double t_final, std::string file_name)
   _nbr_elements = nbr_elements;
   _t_final = t_final;
   _file_name = file_name;
-  _delta_x = 1./nbr_elements;
+  _delta_x = 1.0/nbr_elements;
 
   _cfl = 0.95;
 
@@ -21,8 +21,8 @@ Probleme1D::Probleme1D(int nbr_elements, double t_final, std::string file_name)
 
 
   //Conditions aux bords
-  _left_bound_Pi = 1.e5 + 50;
-  _right_bound_Pi = 1.e5 + 50;
+  _left_bound_Pi = 1.0e5 + 50;
+  _right_bound_Pi = 1.0e5 + 50;
 
   _left_bound_U = LeftBoundValue();
   _right_bound_U = RightBoundValue();
@@ -35,9 +35,9 @@ Probleme1D::Probleme1D(int nbr_elements, double t_final, std::string file_name)
   for (int elem_j = 0; elem_j < nbr_elements; elem_j++)
   {
     double rho = 1.0;
-    double u = 300.;
+    double u = 5000.;
     double v = 5.0;
-    double p = 1.e5;
+    double p = 1.0e5;
 
     _U[elem_j].resize(4);
     _Phi_interface.resize(4);
@@ -90,6 +90,8 @@ void Probleme1D::Update_a()
     rhoLcL = rhoRcR;
     rhoRcR = sqrt(1.4*_Pi[elem_j]*_U[elem_j][0]);
     _a[elem_j] = 1.5*std::max(rhoLcL, rhoRcR);
+
+    std::cout << _a[elem_j] << std::endl;
   }
 
   rhoLcL = rhoRcR;
@@ -122,7 +124,7 @@ void Probleme1D::Update_L()
 {
   for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
   {
-    _L[elem_j] = 1. + _Dt_on_Dx*(_u_star[elem_j+1] - _u_star[elem_j]);
+    _L[elem_j] = 1.0 + _Dt_on_Dx*(_u_star[elem_j+1] - _u_star[elem_j]);
   }
 }
 
@@ -163,7 +165,7 @@ std::vector<double> Probleme1D::LeftBoundValue()
 {
   double rho, u, v, rho_u, rho_v, rho_E;
   rho = 1.0;
-  u = 300.0;
+  u = 5000.0;
   v = 5.0;
 
   rho_u = rho*u;
@@ -176,7 +178,7 @@ std::vector<double> Probleme1D::RightBoundValue()
 {
   double rho, u, v, rho_u, rho_v, rho_E;
   rho = 1.0;
-  u = 300.0;
+  u = 5000.0;
   v = 5.0;
 
   rho_u = rho*u;
@@ -187,23 +189,41 @@ std::vector<double> Probleme1D::RightBoundValue()
 
 void Probleme1D::AcousticStep()
 {
+  // for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
+  // {
+  //   _U[elem_j][0] = _U[elem_j][0]/_L[elem_j];
+  //   _U[elem_j][1] = (_U[elem_j][1] - _Dt_on_Dx*(_Pi_star[elem_j+1] - _Pi_star[elem_j]))/_L[elem_j];
+  //   _U[elem_j][2] = _U[elem_j][2]/_L[elem_j];
+  //   _U[elem_j][3] = (_U[elem_j][3] - _Dt_on_Dx*(_Pi_star[elem_j+1]*_u_star[elem_j+1] - _Pi_star[elem_j]*_u_star[elem_j]))/_L[elem_j];
+  // }
+
+
   for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
   {
-    _U[elem_j][0] = _U[elem_j][0]/_L[elem_j];
-    _U[elem_j][1] = (_U[elem_j][1] - _Dt_on_Dx*(_Pi_star[elem_j+1] - _Pi_star[elem_j]))/_L[elem_j];
-    _U[elem_j][2] = _U[elem_j][2]/_L[elem_j];
-    _U[elem_j][3] = (_U[elem_j][3] - _Dt_on_Dx*(_Pi_star[elem_j+1]*_u_star[elem_j+1] - _Pi_star[elem_j]*_u_star[elem_j]))/_L[elem_j];
+    _U[elem_j][0] = _U[elem_j][0];
+    _U[elem_j][1] = (_U[elem_j][1] - _Dt_on_Dx*(_Pi_star[elem_j+1] - _Pi_star[elem_j]));
+    _U[elem_j][2] = _U[elem_j][2];
+    _U[elem_j][3] = (_U[elem_j][3] - _Dt_on_Dx*(_Pi_star[elem_j+1]*_u_star[elem_j+1] - _Pi_star[elem_j]*_u_star[elem_j]));
   }
 }
 
 void Probleme1D::TransportStep()
 {
+  // for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
+  // {
+  //   _U[elem_j][0] = _U[elem_j][0]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][0] - _u_star[elem_j]*_Phi_interface[elem_j][0]);
+  //   _U[elem_j][1] = _U[elem_j][1]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][1] - _u_star[elem_j]*_Phi_interface[elem_j][1]);
+  //   _U[elem_j][2] = _U[elem_j][2]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][2] - _u_star[elem_j]*_Phi_interface[elem_j][2]);
+  //   _U[elem_j][3] = _U[elem_j][3]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][3] - _u_star[elem_j]*_Phi_interface[elem_j][3]);
+  // }
+
+
   for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
   {
-    _U[elem_j][0] = _U[elem_j][0]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][0] - _u_star[elem_j]*_Phi_interface[elem_j][0]);
-    _U[elem_j][1] = _U[elem_j][1]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][1] - _u_star[elem_j]*_Phi_interface[elem_j][1]);
-    _U[elem_j][2] = _U[elem_j][2]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][2] - _u_star[elem_j]*_Phi_interface[elem_j][2]);
-    _U[elem_j][3] = _U[elem_j][3]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][3] - _u_star[elem_j]*_Phi_interface[elem_j][3]);
+    _U[elem_j][0] = _U[elem_j][0] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][0] - _u_star[elem_j]*_Phi_interface[elem_j][0]);
+    _U[elem_j][1] = _U[elem_j][1] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][1] - _u_star[elem_j]*_Phi_interface[elem_j][1]);
+    _U[elem_j][2] = _U[elem_j][2] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][2] - _u_star[elem_j]*_Phi_interface[elem_j][2]);
+    _U[elem_j][3] = _U[elem_j][3] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][3] - _u_star[elem_j]*_Phi_interface[elem_j][3]);
   }
 }
 
@@ -252,11 +272,12 @@ void Probleme1D::TimeIteration(int time_it)
   Update_u_star();
   Update_Pi_star();
 
-  double max_for_cfl = 0.;
+  double max_for_cfl;
 
-  for (int elem_j = 0; elem_j < _nbr_elements+1; elem_j++)
+  for (int elem_j = 1; elem_j < _nbr_elements; elem_j++)
   {
     double buffer = 0.5*(_u_star[elem_j] + abs(_u_star[elem_j]) - _u_star[elem_j+1] + abs(_u_star[elem_j+1]));
+    std::cout << "buffer" << elem_j << " = " << buffer << std::endl;
     if (buffer > max_for_cfl)
     {
       max_for_cfl = buffer;
