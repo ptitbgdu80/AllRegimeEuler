@@ -8,7 +8,7 @@ Probleme1D::Probleme1D(int nbr_elements, double t_final, std::string file_name)
   _file_name = file_name;
   _delta_x = 1.0/nbr_elements;
 
-  _cfl = 0.95;
+  _cfl = 0.1;
 
   _U.resize(nbr_elements); // U contient les variables conservatives (rho, rho*u, rho*v, rho*E)
   _u.resize(nbr_elements);
@@ -304,7 +304,29 @@ void Probleme1D::TimeIteration(int time_it)
   Update_u_star();
   Update_Pi_star();
 
-  double max_for_cfl;
+  //Evaluation de la cfl pour l'acoustic step
+  double max_for_cfl = _a[0]/std::min(_left_bound_U[0],_U[0][0]);
+  double buffer;
+
+  for (int elem_j = 1; elem_j < _nbr_elements; elem_j++)
+  {
+    buffer = _a[elem_j]/std::min(_U[elem_j-1][0],_U[elem_j][0]);
+    if (buffer > max_for_cfl)
+    {
+      max_for_cfl = buffer;
+    }
+  }
+  buffer = _a[_nbr_elements]/std::min(_U[_nbr_elements-1][0],_right_bound_U[0]);
+  if (buffer > max_for_cfl)
+  {
+    max_for_cfl = buffer;
+  }
+
+  _Dt_on_Dx = _cfl/(2*max_for_cfl);
+
+
+  //Evaluation de la cfl pour la transport step
+  max_for_cfl = 0.5*(_u_star[0] + abs(_u_star[0]) - _u_star[1] + abs(_u_star[1]));
 
   for (int elem_j = 1; elem_j < _nbr_elements; elem_j++)
   {
@@ -315,7 +337,7 @@ void Probleme1D::TimeIteration(int time_it)
     }
   }
 
-  _Dt_on_Dx = _cfl/max_for_cfl;
+  _Dt_on_Dx = std::min(_cfl/max_for_cfl,_Dt_on_Dx);
 
   _time += _Dt_on_Dx*_delta_x;
 
