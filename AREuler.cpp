@@ -20,33 +20,44 @@ Probleme1D::Probleme1D(int nbr_elements, double t_final, std::string file_name)
   _Phi_interface.resize(nbr_elements + 1);
 
 
-  //Conditions aux bords
-  _left_bound_Pi = 1.0e5 + 50;
-  _right_bound_Pi = 1.0e5 + 50;
-
-  _left_bound_U = LeftBoundValue();
-  _right_bound_U = RightBoundValue();
-
-  _left_bound_u = _left_bound_U[1]/_left_bound_U[0];
-  _right_bound_u = _right_bound_U[1]/_right_bound_U[0];
-
-
   //Conditions initiales
   for (int elem_j = 0; elem_j < nbr_elements; elem_j++)
   {
-    double rho = 1.0;
-    double u = 5000.;
-    double v = 5.0;
-    double p = 1.0e5;
+    double rho, u, v, p;
+    if ((elem_j + 1./2.)*_delta_x < 0.5)
+    {
+      rho = 1.0;
+      u = 0.0;
+      v = 0.0;
+      p = 1.0e5;
+      _Pi[elem_j] = p;
+    }
+
+    else
+    {
+      rho = 0.1;
+      u = 0.0;
+      v = 0.0;
+      p = 1.0e4;
+      _Pi[elem_j] = p;
+    }
 
     _U[elem_j].resize(4);
-    _Phi_interface.resize(4);
+    _Phi_interface[elem_j].resize(4);
 
     _U[elem_j][0] = rho;
     _U[elem_j][1] = rho*u;
     _U[elem_j][2] = rho*v;
     _U[elem_j][3] = PressureToRhoE(p, _U[elem_j][0], _U[elem_j][1], _U[elem_j][2]);
   }
+
+
+  //Conditions aux bords
+  _left_bound_U = LeftBoundValue();
+  _right_bound_U = RightBoundValue();
+
+  _left_bound_u = _left_bound_U[1]/_left_bound_U[0];
+  _right_bound_u = _right_bound_U[1]/_right_bound_U[0];
 }
 
 
@@ -90,8 +101,6 @@ void Probleme1D::Update_a()
     rhoLcL = rhoRcR;
     rhoRcR = sqrt(1.4*_Pi[elem_j]*_U[elem_j][0]);
     _a[elem_j] = 1.5*std::max(rhoLcL, rhoRcR);
-
-    std::cout << _a[elem_j] << std::endl;
   }
 
   rhoLcL = rhoRcR;
@@ -163,67 +172,63 @@ void Probleme1D::Update_Phi_interface()
 
 std::vector<double> Probleme1D::LeftBoundValue()
 {
-  double rho, u, v, rho_u, rho_v, rho_E;
-  rho = 1.0;
-  u = 5000.0;
-  v = 5.0;
+  double rho, rho_u, rho_v, rho_E;
+  // rho = 1.0;
+  // u = 5000.0;
+  // v = 5.0;
+  //
+  // rho_u = rho*u;
+  // rho_v = rho*v;
+  // rho_E = PressureToRhoE(_left_bound_Pi, rho, rho_u, rho_v);
 
-  rho_u = rho*u;
-  rho_v = rho*v;
+  _left_bound_Pi = _Pi[0];
+
+  rho = _U[0][0];
+  rho_u = _U[0][1];
+  rho_v = _U[0][2];
   rho_E = PressureToRhoE(_left_bound_Pi, rho, rho_u, rho_v);
   return {rho, rho_u, rho_v, rho_E};
 }
 
 std::vector<double> Probleme1D::RightBoundValue()
 {
-  double rho, u, v, rho_u, rho_v, rho_E;
-  rho = 1.0;
-  u = 5000.0;
-  v = 5.0;
+  double rho, rho_u, rho_v, rho_E;
+  // rho = 1.0;
+  // u = 5000.0;
+  // v = 5.0;
+  //
+  // rho_u = rho*u;
+  // rho_v = rho*v;
+  // rho_E = PressureToRhoE(_right_bound_Pi, rho, rho_u, rho_v);
 
-  rho_u = rho*u;
-  rho_v = rho*v;
+  _right_bound_Pi = _Pi[_nbr_elements-1];
+
+  rho = _U[_nbr_elements-1][0];
+  rho_u = _U[_nbr_elements-1][1];
+  rho_v = _U[_nbr_elements-1][2];
   rho_E = PressureToRhoE(_right_bound_Pi, rho, rho_u, rho_v);
   return {rho, rho_u, rho_v, rho_E};
 }
 
 void Probleme1D::AcousticStep()
 {
-  // for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
-  // {
-  //   _U[elem_j][0] = _U[elem_j][0]/_L[elem_j];
-  //   _U[elem_j][1] = (_U[elem_j][1] - _Dt_on_Dx*(_Pi_star[elem_j+1] - _Pi_star[elem_j]))/_L[elem_j];
-  //   _U[elem_j][2] = _U[elem_j][2]/_L[elem_j];
-  //   _U[elem_j][3] = (_U[elem_j][3] - _Dt_on_Dx*(_Pi_star[elem_j+1]*_u_star[elem_j+1] - _Pi_star[elem_j]*_u_star[elem_j]))/_L[elem_j];
-  // }
-
-
   for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
   {
-    _U[elem_j][0] = _U[elem_j][0];
-    _U[elem_j][1] = (_U[elem_j][1] - _Dt_on_Dx*(_Pi_star[elem_j+1] - _Pi_star[elem_j]));
-    _U[elem_j][2] = _U[elem_j][2];
-    _U[elem_j][3] = (_U[elem_j][3] - _Dt_on_Dx*(_Pi_star[elem_j+1]*_u_star[elem_j+1] - _Pi_star[elem_j]*_u_star[elem_j]));
+    _U[elem_j][0] = _U[elem_j][0]/_L[elem_j];
+    _U[elem_j][1] = (_U[elem_j][1] - _Dt_on_Dx*(_Pi_star[elem_j+1] - _Pi_star[elem_j]))/_L[elem_j];
+    _U[elem_j][2] = _U[elem_j][2]/_L[elem_j];
+    _U[elem_j][3] = (_U[elem_j][3] - _Dt_on_Dx*(_Pi_star[elem_j+1]*_u_star[elem_j+1] - _Pi_star[elem_j]*_u_star[elem_j]))/_L[elem_j];
   }
 }
 
 void Probleme1D::TransportStep()
 {
-  // for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
-  // {
-  //   _U[elem_j][0] = _U[elem_j][0]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][0] - _u_star[elem_j]*_Phi_interface[elem_j][0]);
-  //   _U[elem_j][1] = _U[elem_j][1]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][1] - _u_star[elem_j]*_Phi_interface[elem_j][1]);
-  //   _U[elem_j][2] = _U[elem_j][2]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][2] - _u_star[elem_j]*_Phi_interface[elem_j][2]);
-  //   _U[elem_j][3] = _U[elem_j][3]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][3] - _u_star[elem_j]*_Phi_interface[elem_j][3]);
-  // }
-
-
   for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
   {
-    _U[elem_j][0] = _U[elem_j][0] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][0] - _u_star[elem_j]*_Phi_interface[elem_j][0]);
-    _U[elem_j][1] = _U[elem_j][1] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][1] - _u_star[elem_j]*_Phi_interface[elem_j][1]);
-    _U[elem_j][2] = _U[elem_j][2] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][2] - _u_star[elem_j]*_Phi_interface[elem_j][2]);
-    _U[elem_j][3] = _U[elem_j][3] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][3] - _u_star[elem_j]*_Phi_interface[elem_j][3]);
+    _U[elem_j][0] = _U[elem_j][0]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][0] - _u_star[elem_j]*_Phi_interface[elem_j][0]);
+    _U[elem_j][1] = _U[elem_j][1]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][1] - _u_star[elem_j]*_Phi_interface[elem_j][1]);
+    _U[elem_j][2] = _U[elem_j][2]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][2] - _u_star[elem_j]*_Phi_interface[elem_j][2]);
+    _U[elem_j][3] = _U[elem_j][3]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][3] - _u_star[elem_j]*_Phi_interface[elem_j][3]);
   }
 }
 
@@ -263,6 +268,33 @@ void Probleme1D::SaveIteration(int time_it)
   }
   file << " " << _right_bound_Pi << std::endl;
 
+  // file << " " << _left_bound_U[0];
+  // for (int iVar = 1; iVar < 4; iVar++)
+  // {
+  //   file << " " << _left_bound_U[iVar]/_left_bound_U[0];
+  // }
+  // file << " " << _left_bound_Pi << std::endl;
+  //
+  // for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
+  // {
+  //   file << elem_j;
+  //   file << " " << _U[elem_j][0];
+  //   for (int iVar = 1; iVar < 4; iVar++)
+  //   {
+  //     file << " " << _U[elem_j][iVar]/_U[elem_j][0];
+  //   }
+  //   file << " " << _Pi[elem_j] << std::endl;
+  // }
+  //
+  // file << _nbr_elements;
+  // file << " " << _right_bound_U[0];
+  // for (int iVar = 1; iVar < 4; iVar++)
+  // {
+  //   file << " " << _right_bound_U[iVar]/_right_bound_U[0];
+  // }
+  // file << " " << _right_bound_Pi << std::endl;
+
+
   file.close();
 }
 
@@ -277,7 +309,6 @@ void Probleme1D::TimeIteration(int time_it)
   for (int elem_j = 1; elem_j < _nbr_elements; elem_j++)
   {
     double buffer = 0.5*(_u_star[elem_j] + abs(_u_star[elem_j]) - _u_star[elem_j+1] + abs(_u_star[elem_j+1]));
-    std::cout << "buffer" << elem_j << " = " << buffer << std::endl;
     if (buffer > max_for_cfl)
     {
       max_for_cfl = buffer;
@@ -290,7 +321,21 @@ void Probleme1D::TimeIteration(int time_it)
 
   Update_L();
 
+  // std::cout << "u500 : " << _u[500] << std::endl;
+  // std::cout << "pi500 : " << _Pi[500] << std::endl;
+  // std::cout << "a500 : " << _a[500] << std::endl;
+  // std::cout << "a501 : " << _a[501] << std::endl;
+  // std::cout << "pi*500 : " << _Pi_star[500] << std::endl;
+  // std::cout << "pi*501 : " << _Pi_star[501] << std::endl;
+  // std::cout << "u*500 : " << _u_star[500] << std::endl;
+  // std::cout << "u*501 : " << _u_star[501] << std::endl;
+  // std::cout << "L500 : " << _L[500] << std::endl;
+
   AcousticStep();
+
+  // std::cout << "rho500 : " << _U[500][0] << std::endl;
+  // std::cout << "rho_u500 : " << _U[500][1] << std::endl;
+  // std::cout << "rho_E500 : " << _U[500][3] << std::endl;
 
   Update_Phi_interface();
 
@@ -299,7 +344,12 @@ void Probleme1D::TimeIteration(int time_it)
   Update_u();
   Update_Pi();
 
+  // std::cout << "p500 : " << _Pi[500] << std::endl;
+
   SaveIteration(time_it);
+
+  _left_bound_U = LeftBoundValue();
+  _right_bound_U = RightBoundValue();
 }
 
 void Probleme1D::Solve()
