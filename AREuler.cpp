@@ -1,18 +1,20 @@
 #include "AREuler.h"
 
 //Constructeur
-Probleme1D::Probleme1D(int nbr_elements, double t_final, std::string file_name)
+Probleme1D::Probleme1D(int nbr_elements, double t_final, int choix_theta, std::string file_name)
 {
   _nbr_elements = nbr_elements;
   _t_final = t_final;
+  _choix_theta = choix_theta;
   _file_name = file_name;
   _delta_x = 1.0/nbr_elements;
 
-  _cfl = 0.1;
+  _cfl = 0.95;
 
   _U.resize(nbr_elements); // U contient les variables conservatives (rho, rho*u, rho*v, rho*E)
   _u.resize(nbr_elements);
   _a.resize(nbr_elements + 1);
+  _theta.resize(nbr_elements + 1);
   _u_star.resize(nbr_elements + 1); //_u_star[j] = u*_(j-1/2) (u* sur l'interface gauche de l'élément contenant xj)
   _L.resize(nbr_elements); // L[j] = 1 + Dt/Dx*(u*_(j+1/2) - u*_(j-1/2))
   _Pi.resize(nbr_elements); // Pi contient les pressions calculées à partir de U
@@ -58,6 +60,31 @@ Probleme1D::Probleme1D(int nbr_elements, double t_final, std::string file_name)
 
   _left_bound_u = _left_bound_U[1]/_left_bound_U[0];
   _right_bound_u = _right_bound_U[1]/_right_bound_U[0];
+
+  //Initialisation des theta
+  switch (choix_theta)
+  {
+    case 0 :
+    for (int elem_j = 0; elem_j < nbr_elements+1; elem_j++)
+    {
+      _theta[elem_j] = 0;
+    }
+    break;
+
+    case 1 :
+    for (int elem_j = 0; elem_j < nbr_elements+1; elem_j++)
+    {
+      _theta[elem_j] = 1;
+    }
+    break;
+
+    case 2 :
+    break;
+
+    default :
+    std::cout << "Le choix de theta doit être 0, 1 ou 2" << std::endl;
+    exit(1);
+  }
 }
 
 
@@ -108,6 +135,38 @@ void Probleme1D::Update_a()
   _a[_nbr_elements] = 1.5*std::max(rhoLcL, rhoRcR);
 }
 
+void Probleme1D::Update_theta()
+{
+  double cL, cR;
+  switch (_choix_theta)
+  {
+    case 0 :
+    case 1 :
+    break;
+
+    case 2 :
+    cL = sqrt(1.4*_left_bound_Pi/_left_bound_U[0]);
+    cR = sqrt(1.4*_Pi[0]/_U[0][0]);
+    _theta[0] = std::min(abs(_u_star[0])/std::max(cL,cR),1.0);
+
+    for (int elem_j = 1; elem_j < _nbr_elements; elem_j++)
+    {
+      cL = cR;
+      cR = sqrt(1.4*_Pi[elem_j]/_U[elem_j][0]);
+      _theta[elem_j] = std::min(abs(_u_star[elem_j])/std::max(cL,cR),1.0);
+    }
+
+    cL = cR;
+    cR = sqrt(1.4*_right_bound_Pi/_right_bound_U[0]);
+    _theta[_nbr_elements] = std::min(abs(_u_star[_nbr_elements])/std::max(cL,cR),1.0);
+    break;
+
+    default:
+    std::cout << "Le choix de theta doit être 0, 1 ou 2" << std::endl;
+    exit(1);
+  }
+}
+
 void Probleme1D::Update_u_star()
 {
   _u_star[0] = 0.5*(_u[0] + _left_bound_u - (_Pi[0] - _left_bound_Pi)/_a[0]);
@@ -120,13 +179,12 @@ void Probleme1D::Update_u_star()
 
 void Probleme1D::Update_Pi_star()
 {
-  double a = 1.0;
-  _Pi_star[0] = 0.5*(_Pi[0] + _left_bound_Pi - a*(_u[0] - _left_bound_u));
+  _Pi_star[0] = 0.5*(_Pi[0] + _left_bound_Pi - _theta[0]*_a[0]*(_u[0] - _left_bound_u));
   for (int elem_j = 1; elem_j < _nbr_elements; elem_j++)
   {
-    _Pi_star[elem_j] = 0.5*(_Pi[elem_j] + _Pi[elem_j-1] - a*(_u[elem_j] - _u[elem_j-1]));
+    _Pi_star[elem_j] = 0.5*(_Pi[elem_j] + _Pi[elem_j-1] - _theta[elem_j]*_a[elem_j]*(_u[elem_j] - _u[elem_j-1]));
   }
-  _Pi_star[_nbr_elements] = 0.5*(_right_bound_Pi + _Pi[_nbr_elements-1] - a*(_right_bound_u - _u[_nbr_elements-1]));
+  _Pi_star[_nbr_elements] = 0.5*(_right_bound_Pi + _Pi[_nbr_elements-1] - _theta[_nbr_elements]*_a[_nbr_elements]*(_right_bound_u - _u[_nbr_elements-1]));
 }
 
 void Probleme1D::Update_L()
@@ -173,13 +231,6 @@ void Probleme1D::Update_Phi_interface()
 std::vector<double> Probleme1D::LeftBoundValue()
 {
   double rho, rho_u, rho_v, rho_E;
-  // rho = 1.0;
-  // u = 5000.0;
-  // v = 5.0;
-  //
-  // rho_u = rho*u;
-  // rho_v = rho*v;
-  // rho_E = PressureToRhoE(_left_bound_Pi, rho, rho_u, rho_v);
 
   _left_bound_Pi = _Pi[0];
 
@@ -193,13 +244,6 @@ std::vector<double> Probleme1D::LeftBoundValue()
 std::vector<double> Probleme1D::RightBoundValue()
 {
   double rho, rho_u, rho_v, rho_E;
-  // rho = 1.0;
-  // u = 5000.0;
-  // v = 5.0;
-  //
-  // rho_u = rho*u;
-  // rho_v = rho*v;
-  // rho_E = PressureToRhoE(_right_bound_Pi, rho, rho_u, rho_v);
 
   _right_bound_Pi = _Pi[_nbr_elements-1];
 
@@ -225,10 +269,10 @@ void Probleme1D::TransportStep()
 {
   for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
   {
-    _U[elem_j][0] = _U[elem_j][0]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][0] - _u_star[elem_j]*_Phi_interface[elem_j][0]);
-    _U[elem_j][1] = _U[elem_j][1]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][1] - _u_star[elem_j]*_Phi_interface[elem_j][1]);
-    _U[elem_j][2] = _U[elem_j][2]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][2] - _u_star[elem_j]*_Phi_interface[elem_j][2]);
-    _U[elem_j][3] = _U[elem_j][3]*_L[elem_j] + _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][3] - _u_star[elem_j]*_Phi_interface[elem_j][3]);
+    _U[elem_j][0] = _U[elem_j][0]*_L[elem_j] - _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][0] - _u_star[elem_j]*_Phi_interface[elem_j][0]);
+    _U[elem_j][1] = _U[elem_j][1]*_L[elem_j] - _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][1] - _u_star[elem_j]*_Phi_interface[elem_j][1]);
+    _U[elem_j][2] = _U[elem_j][2]*_L[elem_j] - _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][2] - _u_star[elem_j]*_Phi_interface[elem_j][2]);
+    _U[elem_j][3] = _U[elem_j][3]*_L[elem_j] - _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][3] - _u_star[elem_j]*_Phi_interface[elem_j][3]);
   }
 }
 
@@ -244,7 +288,7 @@ void Probleme1D::SaveIteration(int time_it)
   file.open(_file_name + "/" + _file_name + std::to_string(time_it), std::ios::out);
 
   file << "# état du système à t = " << _time << std::endl;
-  file << "-1";
+  file << -_delta_x/2.;
   for (int iVar = 0; iVar < 4; iVar++)
   {
     file << " " << _left_bound_U[iVar];
@@ -253,7 +297,7 @@ void Probleme1D::SaveIteration(int time_it)
 
   for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
   {
-    file << elem_j;
+    file << (elem_j + 0.5)*_delta_x;
     for (int iVar = 0; iVar < 4; iVar++)
     {
       file << " " << _U[elem_j][iVar];
@@ -261,7 +305,7 @@ void Probleme1D::SaveIteration(int time_it)
     file << " " << _Pi[elem_j] << std::endl;
   }
 
-  file << _nbr_elements;
+  file << 1.0 + 0.5*_delta_x;
   for (int iVar = 0; iVar < 4; iVar++)
   {
     file << " " << _right_bound_U[iVar];
@@ -303,6 +347,7 @@ void Probleme1D::TimeIteration(int time_it)
   Update_a();
   Update_u_star();
   Update_Pi_star();
+  Update_theta();
 
   //Evaluation de la cfl pour l'acoustic step
   double max_for_cfl = _a[0]/std::min(_left_bound_U[0],_U[0][0]);
@@ -343,21 +388,7 @@ void Probleme1D::TimeIteration(int time_it)
 
   Update_L();
 
-  // std::cout << "u500 : " << _u[500] << std::endl;
-  // std::cout << "pi500 : " << _Pi[500] << std::endl;
-  // std::cout << "a500 : " << _a[500] << std::endl;
-  // std::cout << "a501 : " << _a[501] << std::endl;
-  // std::cout << "pi*500 : " << _Pi_star[500] << std::endl;
-  // std::cout << "pi*501 : " << _Pi_star[501] << std::endl;
-  // std::cout << "u*500 : " << _u_star[500] << std::endl;
-  // std::cout << "u*501 : " << _u_star[501] << std::endl;
-  // std::cout << "L500 : " << _L[500] << std::endl;
-
   AcousticStep();
-
-  // std::cout << "rho500 : " << _U[500][0] << std::endl;
-  // std::cout << "rho_u500 : " << _U[500][1] << std::endl;
-  // std::cout << "rho_E500 : " << _U[500][3] << std::endl;
 
   Update_Phi_interface();
 
@@ -366,12 +397,12 @@ void Probleme1D::TimeIteration(int time_it)
   Update_u();
   Update_Pi();
 
-  // std::cout << "p500 : " << _Pi[500] << std::endl;
-
   SaveIteration(time_it);
 
   _left_bound_U = LeftBoundValue();
   _right_bound_U = RightBoundValue();
+  _left_bound_u = _left_bound_U[1]/_left_bound_U[0];
+  _right_bound_u = _right_bound_U[1]/_right_bound_U[0];
 }
 
 void Probleme1D::Solve()
