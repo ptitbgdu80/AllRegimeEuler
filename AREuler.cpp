@@ -31,19 +31,20 @@ Probleme1D::Probleme1D(int nbr_elements, double t_final, int choix_theta, std::s
     {
       rho = 1.0;
       u = 0.0;
-      v = 0.0;
+      v = 1.0;
       p = 1.0e5;
-      _Pi[elem_j] = p;
     }
 
     else
     {
       rho = 0.1;
       u = 0.0;
-      v = 0.0;
+      v = 1.0;
       p = 1.0e4;
-      _Pi[elem_j] = p;
     }
+
+    _u[elem_j] = u;
+    _Pi[elem_j] = p;
 
     _U[elem_j].resize(4);
     _Phi_interface[elem_j].resize(4);
@@ -271,59 +272,35 @@ void Probleme1D::SaveIteration(int time_it)
   }
 
   std::ofstream file;
-  file.open(_file_name + "/" + _file_name + std::to_string(time_it), std::ios::out);
+  file.open(_file_name + "/it_" + std::to_string(time_it), std::ios::out);
 
-  file << "# état du système à t = " << _time << std::endl;
+  file << "# état du système à t = " << _time << " : x, densité, pression, vitesse scalaire, nombre de Mach" << std::endl;
   file << -0.5*_delta_x;
-  for (int iVar = 0; iVar < 4; iVar++)
-  {
-    file << " " << _left_bound_U[iVar];
-  }
-  file << " " << _left_bound_Pi << std::endl;
+  file << " " << _left_bound_U[0];
+  file << " " << _left_bound_Pi;
+  double velocity_mag = sqrt(_left_bound_U[1]*_left_bound_U[1] + _left_bound_U[2]*_left_bound_U[2])/_left_bound_U[0];
+  double sound_speed = sqrt(1.4*_left_bound_Pi/_left_bound_U[0]);
+  file << " " << velocity_mag;
+  file << " " << velocity_mag/sound_speed << std::endl;
 
   for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
   {
     file << (elem_j + 0.5)*_delta_x;
-    for (int iVar = 0; iVar < 4; iVar++)
-    {
-      file << " " << _U[elem_j][iVar];
-    }
-    file << " " << _Pi[elem_j] << std::endl;
+    file << " " << _U[elem_j][0];
+    file << " " << _Pi[elem_j];
+    velocity_mag = sqrt(_U[elem_j][1]*_U[elem_j][1] + _U[elem_j][2]*_U[elem_j][2])/_U[elem_j][0];
+    sound_speed = sqrt(1.4*_Pi[elem_j]/_U[elem_j][0]);
+    file << " " << velocity_mag;
+    file << " " << velocity_mag/sound_speed << std::endl;
   }
 
   file << 1.0 + 0.5*_delta_x;
-  for (int iVar = 0; iVar < 4; iVar++)
-  {
-    file << " " << _right_bound_U[iVar];
-  }
-  file << " " << _right_bound_Pi << std::endl;
-
-  // file << " " << _left_bound_U[0];
-  // for (int iVar = 1; iVar < 4; iVar++)
-  // {
-  //   file << " " << _left_bound_U[iVar]/_left_bound_U[0];
-  // }
-  // file << " " << _left_bound_Pi << std::endl;
-  //
-  // for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
-  // {
-  //   file << elem_j;
-  //   file << " " << _U[elem_j][0];
-  //   for (int iVar = 1; iVar < 4; iVar++)
-  //   {
-  //     file << " " << _U[elem_j][iVar]/_U[elem_j][0];
-  //   }
-  //   file << " " << _Pi[elem_j] << std::endl;
-  // }
-  //
-  // file << _nbr_elements;
-  // file << " " << _right_bound_U[0];
-  // for (int iVar = 1; iVar < 4; iVar++)
-  // {
-  //   file << " " << _right_bound_U[iVar]/_right_bound_U[0];
-  // }
-  // file << " " << _right_bound_Pi << std::endl;
-
+  file << " " << _right_bound_U[0];
+  file << " " << _right_bound_Pi;
+  velocity_mag = sqrt(_right_bound_U[1]*_right_bound_U[1] + _right_bound_U[2]*_right_bound_U[2])/_right_bound_U[0];
+  sound_speed = sqrt(1.4*_right_bound_Pi/_right_bound_U[0]);
+  file << " " << velocity_mag;
+  file << " " << velocity_mag/sound_speed << std::endl;
 
   file.close();
 }
@@ -382,19 +359,15 @@ void Probleme1D::TimeIteration(int time_it)
 
   Update_u();
   Update_Pi();
+  Update_CL();
 
   SaveIteration(time_it);
-
-  Update_CL();
 }
 
 void Probleme1D::Solve()
 {
   _time = 0.0;
   int time_it = 0;
-
-  Update_u();
-  Update_Pi();
 
   SaveIteration(time_it);
 
@@ -403,6 +376,8 @@ void Probleme1D::Solve()
     time_it += 1;
     TimeIteration(time_it);
   }
+
+  std::cout << "t_final = " << _t_final << " atteint en " << time_it << " itérations" << std::endl;
 }
 
 
