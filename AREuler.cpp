@@ -20,7 +20,8 @@ Probleme1D::Probleme1D(int nbr_elements, double t_final, int choix_theta, std::s
   _Pi.resize(nbr_elements); // Pi contient les pressions calculées à partir de U
   _Pi_star.resize(nbr_elements + 1); //_Pi_star[j] = Pi*_(j-1/2) (Pi* sur l'interface gauche de l'élément contenant xj)
   _Phi_interface.resize(nbr_elements + 1);
-
+  _left_bound_U.resize(4);
+  _right_bound_U.resize(4);
 
   //Conditions initiales
   for (int elem_j = 0; elem_j < nbr_elements; elem_j++)
@@ -55,11 +56,7 @@ Probleme1D::Probleme1D(int nbr_elements, double t_final, int choix_theta, std::s
 
 
   //Conditions aux bords
-  _left_bound_U = LeftBoundValue();
-  _right_bound_U = RightBoundValue();
-
-  _left_bound_u = _left_bound_U[1]/_left_bound_U[0];
-  _right_bound_u = _right_bound_U[1]/_right_bound_U[0];
+  Update_CL();
 
   //Initialisation des theta
   switch (choix_theta)
@@ -109,10 +106,6 @@ void Probleme1D::Update_Pi()
   for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
   {
     _Pi[elem_j] = 0.4*(_U[elem_j][3] - (_U[elem_j][1]*_U[elem_j][1] + _U[elem_j][2]*_U[elem_j][2])/(2*_U[elem_j][0])); // p = (gamma - 1)*rho*e avec gamma = 1.4 et e = E - |u²|
-    if (_Pi[elem_j] < 0)
-    {
-      std::cout << "Attention pression négative pour l'élément " << elem_j << std::endl;
-    }
   }
 }
 
@@ -228,30 +221,23 @@ void Probleme1D::Update_Phi_interface()
   }
 }
 
-std::vector<double> Probleme1D::LeftBoundValue()
+void Probleme1D::Update_CL()
 {
-  double rho, rho_u, rho_v, rho_E;
-
   _left_bound_Pi = _Pi[0];
-
-  rho = _U[0][0];
-  rho_u = _U[0][1];
-  rho_v = _U[0][2];
-  rho_E = PressureToRhoE(_left_bound_Pi, rho, rho_u, rho_v);
-  return {rho, rho_u, rho_v, rho_E};
-}
-
-std::vector<double> Probleme1D::RightBoundValue()
-{
-  double rho, rho_u, rho_v, rho_E;
-
   _right_bound_Pi = _Pi[_nbr_elements-1];
 
-  rho = _U[_nbr_elements-1][0];
-  rho_u = _U[_nbr_elements-1][1];
-  rho_v = _U[_nbr_elements-1][2];
-  rho_E = PressureToRhoE(_right_bound_Pi, rho, rho_u, rho_v);
-  return {rho, rho_u, rho_v, rho_E};
+  _left_bound_U[0] = _U[0][0];
+  _left_bound_U[1] = _U[0][1];
+  _left_bound_U[2] = _U[0][2];
+  _left_bound_U[3] = PressureToRhoE(_left_bound_Pi,  _U[0][0],  _U[0][1],  _U[0][2]);
+
+  _right_bound_U[0] = _U[_nbr_elements-1][0];
+  _right_bound_U[1] = _U[_nbr_elements-1][1];
+  _right_bound_U[2] = _U[_nbr_elements-1][2];
+  _right_bound_U[3] = PressureToRhoE(_left_bound_Pi, _U[_nbr_elements-1][0], _U[_nbr_elements-1][1], _U[_nbr_elements-1][3]);
+
+  _left_bound_u = _left_bound_U[1]/_left_bound_U[0];
+  _right_bound_u = _right_bound_U[1]/_right_bound_U[0];
 }
 
 void Probleme1D::AcousticStep()
@@ -288,7 +274,7 @@ void Probleme1D::SaveIteration(int time_it)
   file.open(_file_name + "/" + _file_name + std::to_string(time_it), std::ios::out);
 
   file << "# état du système à t = " << _time << std::endl;
-  file << -_delta_x/2.;
+  file << -0.5*_delta_x;
   for (int iVar = 0; iVar < 4; iVar++)
   {
     file << " " << _left_bound_U[iVar];
@@ -346,8 +332,8 @@ void Probleme1D::TimeIteration(int time_it)
 {
   Update_a();
   Update_u_star();
-  Update_Pi_star();
   Update_theta();
+  Update_Pi_star();
 
   //Evaluation de la cfl pour l'acoustic step
   double max_for_cfl = _a[0]/std::min(_left_bound_U[0],_U[0][0]);
@@ -375,7 +361,7 @@ void Probleme1D::TimeIteration(int time_it)
 
   for (int elem_j = 1; elem_j < _nbr_elements; elem_j++)
   {
-    double buffer = 0.5*(_u_star[elem_j] + abs(_u_star[elem_j]) - _u_star[elem_j+1] + abs(_u_star[elem_j+1]));
+    buffer = 0.5*(_u_star[elem_j] + abs(_u_star[elem_j]) - _u_star[elem_j+1] + abs(_u_star[elem_j+1]));
     if (buffer > max_for_cfl)
     {
       max_for_cfl = buffer;
@@ -399,10 +385,7 @@ void Probleme1D::TimeIteration(int time_it)
 
   SaveIteration(time_it);
 
-  _left_bound_U = LeftBoundValue();
-  _right_bound_U = RightBoundValue();
-  _left_bound_u = _left_bound_U[1]/_left_bound_U[0];
-  _right_bound_u = _right_bound_U[1]/_right_bound_U[0];
+  Update_CL();
 }
 
 void Probleme1D::Solve()
@@ -417,7 +400,6 @@ void Probleme1D::Solve()
 
   while (_time < _t_final)
   {
-    std::cout << "t = " << _time << std::endl;
     time_it += 1;
     TimeIteration(time_it);
   }
