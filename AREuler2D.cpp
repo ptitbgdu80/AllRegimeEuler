@@ -96,6 +96,8 @@ Probleme2D::Probleme2D(int nbr_elements_1D, double t_final, int choix_theta, std
       u = 2*pow(sin(pi*x),2)*sin(pi*y)*cos(pi*y);
       v = -2*sin(pi*x)*cos(pi*x)*pow(sin(pi*y),2);
       p = 1.0e3;
+      _u[line][column] = u;
+      _v[line][column] = v;
       _Pi[line][column] = p;
 
       _U[line][column][0] = rho;
@@ -155,8 +157,6 @@ Probleme2D::Probleme2D(int nbr_elements_1D, double t_final, int choix_theta, std
     std::cout << "Le choix de theta doit être 0, 1 ou 2" << std::endl;
     exit(1);
   }
-
-  std::cout << "test6" << std::endl;
 }
 
 
@@ -296,7 +296,7 @@ void Probleme2D::Update_Pi_star()
     {
       _Pi_star_LR[line][column] = 0.5*(_Pi[line][column] + _Pi[line][column-1] - _theta_LR[line][column]*_a_LR[line][column]*(_u[line][column] - _u[line][column-1]));
     }
-    _Pi_star_LR[line][_nbr_elements_1D] = 0.5*(_right_bound_Pi[line] + _Pi[line][_nbr_elements_1D-1] - _theta_LR[line][_nbr_elements_1D-1]*_a_LR[line][_nbr_elements_1D-1]*(_right_bound_u[line] - _u[line][_nbr_elements_1D-1]));
+    _Pi_star_LR[line][_nbr_elements_1D] = 0.5*(_right_bound_Pi[line] + _Pi[line][_nbr_elements_1D-1] - _theta_LR[line][_nbr_elements_1D]*_a_LR[line][_nbr_elements_1D]*(_right_bound_u[line] - _u[line][_nbr_elements_1D-1]));
   }
 
   for (int column = 0; column < _nbr_elements_1D; column++)
@@ -306,7 +306,7 @@ void Probleme2D::Update_Pi_star()
     {
       _Pi_star_DU[line][column] = 0.5*(_Pi[line][column] + _Pi[line-1][column] - _theta_DU[line][column]*_a_DU[line][column]*(_v[line][column] - _v[line-1][column]));
     }
-    _Pi_star_DU[_nbr_elements_1D][column] = 0.5*(_up_bound_Pi[column] + _Pi[_nbr_elements_1D-1][column] - _theta_DU[_nbr_elements_1D-1][column]*_a_LR[_nbr_elements_1D-1][column]*(_up_bound_v[column] - _u[_nbr_elements_1D-1][column]));
+    _Pi_star_DU[_nbr_elements_1D][column] = 0.5*(_up_bound_Pi[column] + _Pi[_nbr_elements_1D-1][column] - _theta_DU[_nbr_elements_1D][column]*_a_DU[_nbr_elements_1D][column]*(_up_bound_v[column] - _v[_nbr_elements_1D-1][column]));
   }
 }
 
@@ -435,22 +435,36 @@ void Probleme2D::AcousticStep()
     {
       _U[line][column][0] = _U[line][column][0]/_L[line][column];
       _U[line][column][1] = (_U[line][column][1] - _Dt_on_Ds*(_Pi_star_LR[line][column+1] - _Pi_star_LR[line][column]))/_L[line][column];
-      _U[line][column][2] = (_U[line][column][2] - _Dt_on_Ds*(_Pi_star_DU[line-1][column] - _Pi_star_DU[line][column]))/_L[line][column];
-      _U[line][column][3] = (_U[line][column][3] - _Dt_on_Ds*(_Pi_star_LR[line][column+1]*_u_star[line][column+1] - _Pi_star_LR[line][column]*_u_star[line][column] + _Pi_star_DU[line-1][column]*_v_star[line-1][column] - _Pi_star_DU[line][column]*_v_star[line][column]))/_L[line][column];
+      _U[line][column][2] = (_U[line][column][2] - _Dt_on_Ds*(_Pi_star_DU[line+1][column] - _Pi_star_DU[line][column]))/_L[line][column];
+      _U[line][column][3] = (_U[line][column][3] - _Dt_on_Ds*(_Pi_star_LR[line][column+1]*_u_star[line][column+1] - _Pi_star_LR[line][column]*_u_star[line][column] + _Pi_star_DU[line+1][column]*_v_star[line+1][column] - _Pi_star_DU[line][column]*_v_star[line][column]))/_L[line][column];
     }
   }
 }
-//
-// void Probleme2D::TransportStep()
-// {
-//   for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
-//   {
-//     _U[elem_j][0] = _U[elem_j][0]*_L[elem_j] - _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][0] - _u_star[elem_j]*_Phi_interface[elem_j][0]);
-//     _U[elem_j][1] = _U[elem_j][1]*_L[elem_j] - _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][1] - _u_star[elem_j]*_Phi_interface[elem_j][1]);
-//     _U[elem_j][2] = _U[elem_j][2]*_L[elem_j] - _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][2] - _u_star[elem_j]*_Phi_interface[elem_j][2]);
-//     _U[elem_j][3] = _U[elem_j][3]*_L[elem_j] - _Dt_on_Dx*(_u_star[elem_j+1]*_Phi_interface[elem_j+1][3] - _u_star[elem_j]*_Phi_interface[elem_j][3]);
-//   }
-// }
+
+void Probleme2D::TransportStep()
+{
+  for (int line = 0; line < _nbr_elements_1D; line++)
+  {
+    for (int column = 0; column < _nbr_elements_1D; column++)
+    {
+      _U[line][column][0] = _U[line][column][0]*_L[line][column];
+      _U[line][column][0] -= _Dt_on_Ds*(_u_star[line][column+1]*_Phi_interface_LR[line][column+1][0] - _u_star[line][column]*_Phi_interface_LR[line][column][0]);
+      _U[line][column][0] -= _Dt_on_Ds*(_v_star[line+1][column]*_Phi_interface_DU[line+1][column][0] - _v_star[line][column]*_Phi_interface_DU[line][column][0]);
+
+      _U[line][column][1] = _U[line][column][1]*_L[line][column];
+      _U[line][column][1] -= _Dt_on_Ds*(_u_star[line][column+1]*_Phi_interface_LR[line][column+1][1] - _u_star[line][column]*_Phi_interface_LR[line][column][1]);
+      _U[line][column][1] -= _Dt_on_Ds*(_v_star[line+1][column]*_Phi_interface_DU[line+1][column][1] - _v_star[line][column]*_Phi_interface_DU[line][column][1]);
+
+      _U[line][column][2] = _U[line][column][2]*_L[line][column];
+      _U[line][column][2] -= _Dt_on_Ds*(_u_star[line][column+1]*_Phi_interface_LR[line][column+1][2] - _u_star[line][column]*_Phi_interface_LR[line][column][2]);
+      _U[line][column][2] -= _Dt_on_Ds*(_v_star[line+1][column]*_Phi_interface_DU[line+1][column][2] - _v_star[line][column]*_Phi_interface_DU[line][column][2]);
+
+      _U[line][column][3] = _U[line][column][3]*_L[line][column];
+      _U[line][column][3] -= _Dt_on_Ds*(_u_star[line][column+1]*_Phi_interface_LR[line][column+1][3] - _u_star[line][column]*_Phi_interface_LR[line][column][3]);
+      _U[line][column][3] -= _Dt_on_Ds*(_v_star[line+1][column]*_Phi_interface_DU[line+1][column][3] - _v_star[line][column]*_Phi_interface_DU[line][column][3]);
+    }
+  }
+}
 
 void Probleme2D::SaveIteration(int time_it)
 {
@@ -592,23 +606,43 @@ void Probleme2D::TimeIteration(int time_it)
 
   AcousticStep();
 
+  // if (time_it < 4)
+  // {
+  //   std::cout << _u[0][0] << ", " << _u[0][1] << std::endl;
+  //   std::cout << _u[1][0] << ", " << _u[1][1] << std::endl << std::endl;
+  //
+  //   std::cout << _U[0][0][0] << ", " << _U[0][1][0] << std::endl;
+  //   std::cout << _U[1][0][0] << ", " << _U[1][1][0] << std::endl << std::endl;
+  //
+  //   std::cout << _a_LR[0][1] << ", " << _a_LR[1][1] << std::endl;
+  //   std::cout << _u_star[0][1] << ", " << _u_star[1][1] << std::endl;
+  //   std::cout << _theta_LR[0][1] << ", " << _theta_LR[1][1] << std::endl;
+  //   std::cout << _Pi_star_LR[0][1] << ", " << _Pi_star_LR[1][1] << std::endl;
+  //   // std::cout << _L[0][1] << ", " << _L[0][2] << std::endl << std::endl;
+  // }
+
   // Update_Phi_interface();
 
   // TransportStep();
 
   Update_u_v_Pi();
 
+  Update_CL();
+
+  if (time_it < 4)
+  {
+    std::cout << _v[0][0] << ", " << _v[0][1] << std::endl;
+    std::cout << _Pi[0][0] << ", " << _Pi[0][1] << std::endl << std::endl;
+  }
+
   SaveIteration(time_it);
 
-  Update_CL();
 }
 
 void Probleme2D::Solve()
 {
   _time = 0.0;
   int time_it = 0;
-
-  Update_u_v_Pi();
 
   SaveIteration(time_it);
 
