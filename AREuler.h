@@ -56,7 +56,7 @@ public:
   void Update_Phi_interface();
   void Update_CL();
   void AcousticStep();
-  // void TransportStep();
+  void TransportStep();
   void SaveIteration(int time_it);
   void TimeIteration(int time_it);
   void Solve();

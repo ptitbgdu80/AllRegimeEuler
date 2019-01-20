@@ -13,6 +13,6 @@ set output "debug2D2.pdf"
 
 plot[-0.1:1.1][-0.1:1.1] "debug2D/debug2D2" u 1:2:7 with image
 
-set output "debug2D845.pdf"
+set output "debug2D3.pdf"
 
-plot[-0.1:1.1][-0.1:1.1] "debug2D/debug2D845" u 1:2:7 with image
+plot[-0.1:1.1][-0.1:1.1] "debug2D/debug2D3" u 1:2:7 with image
