@@ -1,18 +1,14 @@
-set terminal pdfcairo enhanced color font "Arial, 12" linewidth 2 fontscale 1.0 \
-    size 16,9
+#set terminal pdfcairo enhanced color font "Arial, 12" linewidth 2 fontscale 1.0 \
+#    size 10,9
 
-set output "debug2D0.pdf"
+#set output "Velocitymag.pdf"
 
-plot[-0.1:1.1][-0.1:1.1] "debug2D/debug2D0" u 1:2:7 with image
+set term gif animate delay 100
 
-set output "debug2D1.pdf"
+set output "pressure2.gif"
 
-plot[-0.1:1.1][-0.1:1.1] "debug2D/debug2D1" u 1:2:7 with image
+set cbrange[0:0.4]
 
-set output "debug2D2.pdf"
-
-plot[-0.1:1.1][-0.1:1.1] "debug2D/debug2D2" u 1:2:7 with image
-
-set output "debug2D3.pdf"
-
-plot[-0.1:1.1][-0.1:1.1] "debug2D/debug2D3" u 1:2:7 with image
+do for [j=0:2] {
+  plot[-0.1:1.1][-0.1:1.1] sprintf("debug2D/debug2D%i",j) u 1:2:4 with image title sprintf("%i",j)
+;}

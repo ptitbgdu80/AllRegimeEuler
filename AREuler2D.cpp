@@ -84,6 +84,7 @@ Probleme2D::Probleme2D(int nbr_elements_1D, double t_final, int choix_theta, std
   }
 
   //Conditions initiales
+
   double pi = 3.141592653589793;
   for (int line = 0; line < nbr_elements_1D; line++)
   {
@@ -107,6 +108,55 @@ Probleme2D::Probleme2D(int nbr_elements_1D, double t_final, int choix_theta, std
     }
   }
 
+  // for (int line = 0; line < nbr_elements_1D; line++)
+  // {
+  //   for (int column = 0; column < nbr_elements_1D; column++)
+  //   {
+  //     double x ,y ,rho, u, v, p;
+  //     x = (column + 0.5)*_delta_s;
+  //     y = (line + 0.5)*_delta_s;
+  //     if (x < 0.5)
+  //     {
+  //       if (y < 0.5)
+  //       {
+  //         rho = 0.138;
+  //         u = 1.206;
+  //         v = 1.206;
+  //         p = 0.029;
+  //       }
+  //       else
+  //       {
+  //         rho = 0.5323;
+  //         u = 1.206;
+  //         v = 0.0;
+  //         p = 0.3;
+  //       }
+  //     }
+  //     else if (y < 0.5)
+  //     {
+  //       rho = 0.5323;
+  //       u = 0.0;
+  //       v = 1.206;
+  //       p = 0.3;
+  //     }
+  //     else
+  //     {
+  //       rho = 1.5;
+  //       u = 0.0;
+  //       v = 0.0;
+  //       p = 1.5;
+  //     }
+  //
+  //     _u[line][column] = u;
+  //     _v[line][column] = v;
+  //     _Pi[line][column] = p;
+  //
+  //     _U[line][column][0] = rho;
+  //     _U[line][column][1] = rho*u;
+  //     _U[line][column][2] = rho*v;
+  //     _U[line][column][3] = PressureToRhoE2D(p, _U[line][column][0], _U[line][column][1], _U[line][column][2]);
+  //   }
+  // }
 
   //Conditions aux bords
   Update_CL();
@@ -425,6 +475,40 @@ void Probleme2D::Update_CL()
     _down_bound_v[index] = 0.0;
     _up_bound_v[index] = 0.0;
   }
+
+  // for (int index = 0; index < _nbr_elements_1D; index++)
+  // {
+  //   _left_bound_Pi[index] = _Pi[index][0];
+  //   _right_bound_Pi[index] = _Pi[index][_nbr_elements_1D-1];
+  //   _down_bound_Pi[index] = _Pi[0][index];
+  //   _up_bound_Pi[index] = _Pi[_nbr_elements_1D-1][index];
+  //
+  //   _left_bound_U[index][0] = _U[index][0][0];
+  //   _left_bound_U[index][1] = _U[index][0][1];
+  //   _left_bound_U[index][2] = _U[index][0][2];
+  //   _left_bound_U[index][3] = PressureToRhoE(_left_bound_Pi[index], _left_bound_U[index][0], _left_bound_U[index][1], _left_bound_U[index][2]);
+  //
+  //   _right_bound_U[index][0] = _U[index][_nbr_elements_1D-1][0];
+  //   _right_bound_U[index][1] = _U[index][_nbr_elements_1D-1][1];
+  //   _right_bound_U[index][2] = _U[index][_nbr_elements_1D-1][2];
+  //   _right_bound_U[index][3] = PressureToRhoE(_right_bound_Pi[index], _right_bound_U[index][0], _right_bound_U[index][1], _right_bound_U[index][2]);
+  //
+  //   _down_bound_U[index][0] = _U[0][index][0];
+  //   _down_bound_U[index][1] = _U[0][index][1];
+  //   _down_bound_U[index][2] = _U[0][index][2];
+  //   _down_bound_U[index][3] = PressureToRhoE(_down_bound_Pi[index], _down_bound_U[index][0], _down_bound_U[index][1], _down_bound_U[index][2]);
+  //
+  //   _up_bound_U[index][0] = _U[_nbr_elements_1D-1][index][0];
+  //   _up_bound_U[index][1] = _U[_nbr_elements_1D-1][index][1];
+  //   _up_bound_U[index][2] = _U[_nbr_elements_1D-1][index][2];
+  //   _up_bound_U[index][3] = PressureToRhoE(_up_bound_Pi[index], _up_bound_U[index][0], _up_bound_U[index][1], _up_bound_U[index][2]);
+  //
+  //   _left_bound_u[index] = _u[index][0];
+  //   _right_bound_u[index] = _u[index][_nbr_elements_1D-1];
+  //   _down_bound_v[index] = _v[0][index];
+  //   _up_bound_v[index] = _v[_nbr_elements_1D-1][index];
+  // }
+
 }
 
 void Probleme2D::AcousticStep()
@@ -479,83 +563,182 @@ void Probleme2D::SaveIteration(int time_it)
 
   file << "# état du système à t = " << _time << std::endl;
   file << -0.5*_delta_s << " " << -0.5*_delta_s;
-  for (int iVar = 0; iVar < 4; iVar++)
-  {
-    file << " " << _down_bound_U[0][iVar]; //Le coin a la même valeur que le premier élément du bas
-  }
-  file << " " << _down_bound_Pi[0] << std::endl;
+  file << " " << _down_bound_U[0][0]; //Le coin a la même valeur que le premier élément du bas
+  file << " " << _down_bound_Pi[0];
+  double velocity_mag = sqrt(_down_bound_U[0][1]*_down_bound_U[0][1] + _down_bound_U[0][2]*_down_bound_U[0][2])/_down_bound_U[0][0];
+  double sound_speed = sqrt(1.4*_down_bound_Pi[0]/_down_bound_U[0][0]);
+  file << " " << velocity_mag;
+  file << " " << velocity_mag/sound_speed;
+  file << std::endl;
 
   for (int column = 0; column < _nbr_elements_1D; column++)
   {
     file << (column + 0.5)*_delta_s << " " << -0.5*_delta_s;
-    for (int iVar = 0; iVar < 4; iVar++)
-    {
-      file << " " << _down_bound_U[column][iVar];
-    }
-    file << " " << _down_bound_Pi[column] << std::endl;
+    file << " " << _down_bound_U[column][0];
+    file << " " << _down_bound_Pi[column];
+    velocity_mag = sqrt(_down_bound_U[column][1]*_down_bound_U[column][1] + _down_bound_U[column][2]*_down_bound_U[column][2])/_down_bound_U[column][0];
+    sound_speed = sqrt(1.4*_down_bound_Pi[column]/_down_bound_U[column][0]);
+    file << " " << velocity_mag;
+    file << " " << velocity_mag/sound_speed;
+    file << std::endl;
   }
 
   file << 1.0 + 0.5*_delta_s << " " << -0.5*_delta_s;
-  for (int iVar = 0; iVar < 4; iVar++)
-  {
-    file << " " << _down_bound_U[_nbr_elements_1D-1][iVar]; //Le coin a la même valeur que le dernier élément du bas
-  }
-  file << " " << _down_bound_Pi[_nbr_elements_1D-1] << std::endl;
+  file << " " << _down_bound_U[_nbr_elements_1D-1][0];
+  file << " " << _down_bound_Pi[_nbr_elements_1D-1];
+  velocity_mag = sqrt(_down_bound_U[_nbr_elements_1D-1][1]*_down_bound_U[_nbr_elements_1D-1][1] + _down_bound_U[_nbr_elements_1D-1][2]*_down_bound_U[_nbr_elements_1D-1][2])/_down_bound_U[_nbr_elements_1D-1][0];
+  sound_speed = sqrt(1.4*_down_bound_Pi[_nbr_elements_1D-1]/_down_bound_U[_nbr_elements_1D-1][0]);
+  file << " " << velocity_mag;
+  file << " " << velocity_mag/sound_speed;
+  file << std::endl;
 
 
 
   for (int line = 0; line < _nbr_elements_1D; line++)
   {
     file << -0.5*_delta_s << " " << (line + 0.5)*_delta_s;
-    for (int iVar = 0; iVar < 4; iVar++)
-    {
-      file << " " << _left_bound_U[line][iVar];
-    }
-    file << " " << _left_bound_Pi[line] << std::endl;
+    file << " " << _left_bound_U[line][0];
+    file << " " << _left_bound_Pi[line];
+    velocity_mag = sqrt(_left_bound_U[line][1]*_left_bound_U[line][1] + _left_bound_U[line][2]*_left_bound_U[line][2])/_left_bound_U[line][0];
+    sound_speed = sqrt(1.4*_left_bound_Pi[line]/_left_bound_U[line][0]);
+    file << " " << velocity_mag;
+    file << " " << velocity_mag/sound_speed;
+    file << std::endl;
 
     for (int column = 0; column < _nbr_elements_1D; column++)
     {
       file << (column + 0.5)*_delta_s << " " << (line + 0.5)*_delta_s;
-      for (int iVar = 0; iVar < 4; iVar++)
-      {
-        file << " " << _U[line][column][iVar];
-      }
-      file << " " << _Pi[line][column] << std::endl;
+      file << " " << _U[line][column][0];
+      file << " " << _Pi[line][column];
+      velocity_mag = sqrt(_U[line][column][1]*_U[line][column][1] + _U[line][column][2]*_U[line][column][2])/_U[line][column][0];
+      sound_speed = sqrt(1.4*_Pi[line][column]/_U[line][column][0]);
+      file << " " << velocity_mag;
+      file << " " << velocity_mag/sound_speed;
+      file << std::endl;
     }
 
     file << 1.0 + 0.5*_delta_s << " " << (line + 0.5)*_delta_s;
-    for (int iVar = 0; iVar < 4; iVar++)
-    {
-      file << " " << _right_bound_U[line][iVar];
-    }
-    file << " " << _right_bound_Pi[line] << std::endl;
+    file << " " << _right_bound_U[line][0];
+    file << " " << _right_bound_Pi[line];
+    velocity_mag = sqrt(_right_bound_U[line][1]*_right_bound_U[line][1] + _right_bound_U[line][2]*_right_bound_U[line][2])/_right_bound_U[line][0];
+    sound_speed = sqrt(1.4*_right_bound_Pi[line]/_right_bound_U[line][0]);
+    file << " " << velocity_mag;
+    file << " " << velocity_mag/sound_speed;
+    file << std::endl;
   }
 
 
 
   file << -0.5*_delta_s << " " << 1.0 + 0.5*_delta_s;
-  for (int iVar = 0; iVar < 4; iVar++)
-  {
-    file << " " << _up_bound_U[0][iVar]; //Le coin a la même valeur que le premier élément du haut
-  }
-  file << " " << _up_bound_Pi[0] << std::endl;
+  file << " " << _up_bound_U[0][0]; //Le coin a la même valeur que le premier élément du haut
+  file << " " << _up_bound_Pi[0];
+  velocity_mag = sqrt(_up_bound_U[0][1]*_up_bound_U[0][1] + _up_bound_U[0][2]*_up_bound_U[0][2])/_up_bound_U[0][0];
+  sound_speed = sqrt(1.4*_up_bound_Pi[0]/_up_bound_U[0][0]);
+  file << " " << velocity_mag;
+  file << " " << velocity_mag/sound_speed;
+  file << std::endl;
 
   for (int column = 0; column < _nbr_elements_1D; column++)
   {
     file << (column + 0.5)*_delta_s << " " << 1.0 + 0.5*_delta_s;
-    for (int iVar = 0; iVar < 4; iVar++)
-    {
-      file << " " << _up_bound_U[column][iVar];
-    }
-    file << " " << _up_bound_Pi[column] << std::endl;
+    file << " " << _up_bound_U[column][0];
+    file << " " << _up_bound_Pi[column];
+    velocity_mag = sqrt(_up_bound_U[column][1]*_up_bound_U[column][1] + _up_bound_U[column][2]*_up_bound_U[column][2])/_up_bound_U[column][0];
+    sound_speed = sqrt(1.4*_up_bound_Pi[column]/_up_bound_U[column][0]);
+    file << " " << velocity_mag;
+    file << " " << velocity_mag/sound_speed;
+    file << std::endl;
   }
 
   file << 1.0 + 0.5*_delta_s << " " << 1.0 + 0.5*_delta_s;
-  for (int iVar = 0; iVar < 4; iVar++)
-  {
-    file << " " << _up_bound_U[_nbr_elements_1D-1][iVar]; //Le coin a la même valeur que le dernier élément du haut
-  }
-  file << " " << _up_bound_Pi[_nbr_elements_1D-1] << std::endl;
+  file << " " << _up_bound_U[_nbr_elements_1D-1][0]; //Le coin a la même valeur que le dernier élément du haut
+  file << " " << _up_bound_Pi[_nbr_elements_1D-1];
+  velocity_mag = sqrt(_up_bound_U[_nbr_elements_1D-1][1]*_up_bound_U[_nbr_elements_1D-1][1] + _up_bound_U[_nbr_elements_1D-1][2]*_up_bound_U[_nbr_elements_1D-1][2])/_up_bound_U[_nbr_elements_1D-1][0];
+  sound_speed = sqrt(1.4*_up_bound_Pi[_nbr_elements_1D-1]/_up_bound_U[_nbr_elements_1D-1][0]);
+  file << " " << velocity_mag;
+  file << " " << velocity_mag/sound_speed;
+  file << std::endl;
+
+
+  // file << "# état du système à t = " << _time << std::endl;
+  // file << -0.5*_delta_s << " " << -0.5*_delta_s;
+  // for (int iVar = 0; iVar < 4; iVar++)
+  // {
+  //   file << " " << _down_bound_U[0][iVar]; //Le coin a la même valeur que le premier élément du bas
+  // }
+  // file << " " << _down_bound_Pi[0] << std::endl;
+  //
+  // for (int column = 0; column < _nbr_elements_1D; column++)
+  // {
+  //   file << (column + 0.5)*_delta_s << " " << -0.5*_delta_s;
+  //   for (int iVar = 0; iVar < 4; iVar++)
+  //   {
+  //     file << " " << _down_bound_U[column][iVar];
+  //   }
+  //   file << " " << _down_bound_Pi[column] << std::endl;
+  // }
+  //
+  // file << 1.0 + 0.5*_delta_s << " " << -0.5*_delta_s;
+  // for (int iVar = 0; iVar < 4; iVar++)
+  // {
+  //   file << " " << _down_bound_U[_nbr_elements_1D-1][iVar]; //Le coin a la même valeur que le dernier élément du bas
+  // }
+  // file << " " << _down_bound_Pi[_nbr_elements_1D-1] << std::endl;
+  //
+  //
+  //
+  // for (int line = 0; line < _nbr_elements_1D; line++)
+  // {
+  //   file << -0.5*_delta_s << " " << (line + 0.5)*_delta_s;
+  //   for (int iVar = 0; iVar < 4; iVar++)
+  //   {
+  //     file << " " << _left_bound_U[line][iVar];
+  //   }
+  //   file << " " << _left_bound_Pi[line] << std::endl;
+  //
+  //   for (int column = 0; column < _nbr_elements_1D; column++)
+  //   {
+  //     file << (column + 0.5)*_delta_s << " " << (line + 0.5)*_delta_s;
+  //     for (int iVar = 0; iVar < 4; iVar++)
+  //     {
+  //       file << " " << _U[line][column][iVar];
+  //     }
+  //     file << " " << _Pi[line][column] << std::endl;
+  //   }
+  //
+  //   file << 1.0 + 0.5*_delta_s << " " << (line + 0.5)*_delta_s;
+  //   for (int iVar = 0; iVar < 4; iVar++)
+  //   {
+  //     file << " " << _right_bound_U[line][iVar];
+  //   }
+  //   file << " " << _right_bound_Pi[line] << std::endl;
+  // }
+  //
+  //
+  //
+  // file << -0.5*_delta_s << " " << 1.0 + 0.5*_delta_s;
+  // for (int iVar = 0; iVar < 4; iVar++)
+  // {
+  //   file << " " << _up_bound_U[0][iVar]; //Le coin a la même valeur que le premier élément du haut
+  // }
+  // file << " " << _up_bound_Pi[0] << std::endl;
+  //
+  // for (int column = 0; column < _nbr_elements_1D; column++)
+  // {
+  //   file << (column + 0.5)*_delta_s << " " << 1.0 + 0.5*_delta_s;
+  //   for (int iVar = 0; iVar < 4; iVar++)
+  //   {
+  //     file << " " << _up_bound_U[column][iVar];
+  //   }
+  //   file << " " << _up_bound_Pi[column] << std::endl;
+  // }
+  //
+  // file << 1.0 + 0.5*_delta_s << " " << 1.0 + 0.5*_delta_s;
+  // for (int iVar = 0; iVar < 4; iVar++)
+  // {
+  //   file << " " << _up_bound_U[_nbr_elements_1D-1][iVar]; //Le coin a la même valeur que le dernier élément du haut
+  // }
+  // file << " " << _up_bound_Pi[_nbr_elements_1D-1] << std::endl;
 
   file.close();
 }
@@ -606,34 +789,13 @@ void Probleme2D::TimeIteration(int time_it)
 
   AcousticStep();
 
-  // if (time_it < 4)
-  // {
-  //   std::cout << _u[0][0] << ", " << _u[0][1] << std::endl;
-  //   std::cout << _u[1][0] << ", " << _u[1][1] << std::endl << std::endl;
-  //
-  //   std::cout << _U[0][0][0] << ", " << _U[0][1][0] << std::endl;
-  //   std::cout << _U[1][0][0] << ", " << _U[1][1][0] << std::endl << std::endl;
-  //
-  //   std::cout << _a_LR[0][1] << ", " << _a_LR[1][1] << std::endl;
-  //   std::cout << _u_star[0][1] << ", " << _u_star[1][1] << std::endl;
-  //   std::cout << _theta_LR[0][1] << ", " << _theta_LR[1][1] << std::endl;
-  //   std::cout << _Pi_star_LR[0][1] << ", " << _Pi_star_LR[1][1] << std::endl;
-  //   // std::cout << _L[0][1] << ", " << _L[0][2] << std::endl << std::endl;
-  // }
+  Update_Phi_interface();
 
-  // Update_Phi_interface();
-
-  // TransportStep();
+  TransportStep();
 
   Update_u_v_Pi();
 
   Update_CL();
-
-  if (time_it < 4)
-  {
-    std::cout << _v[0][0] << ", " << _v[0][1] << std::endl;
-    std::cout << _Pi[0][0] << ", " << _Pi[0][1] << std::endl << std::endl;
-  }
 
   SaveIteration(time_it);
 
@@ -648,10 +810,11 @@ void Probleme2D::Solve()
 
   while (_time < _t_final)
   {
-    std::cout << "t = " << _time << std::endl;
     time_it += 1;
     TimeIteration(time_it);
   }
+
+  std::cout << "t_final = " << _t_final << " atteint en " << time_it << " itérations" << std::endl;
 }
 
 

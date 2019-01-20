@@ -11,16 +11,16 @@ set style line 7 lt rgb "#FF66FF" lw 2 # Rose
 
 set output "Density1D.pdf"
 
-plot[0.3:0.7][0.09:1.01] "Riemann1D_theta0/it_552" u 1:2 w l ls 1, "Riemann1D_theta1/it_478" u 1:2 w l ls 2, "Riemann1D_theta2/it_514" u 1:2 w l ls 3
+plot[0.3:0.7][0.09:1.01] "Riemann1D_theta0/it_537" u 1:2 w l ls 1, "Riemann1D_theta1/it_484" u 1:2 w l ls 2, "Riemann1D_theta2/it_507" u 1:2 w l ls 3
 
 set output "Pressure1D.pdf"
 
-plot[0.3:0.7][9050:101000] "Riemann1D_theta0/it_552" u 1:3 w l ls 1, "Riemann1D_theta1/it_478" u 1:3 w l ls 2, "Riemann1D_theta2/it_514" u 1:3 w l ls 3
+plot[0.3:0.7][9050:101000] "Riemann1D_theta0/it_537" u 1:3 w l ls 1, "Riemann1D_theta1/it_484" u 1:3 w l ls 2, "Riemann1D_theta2/it_507" u 1:3 w l ls 3
 
 set output "Velocity_Mag1D.pdf"
 
-plot[0.3:0.7][-0.1:400] "Riemann1D_theta0/it_552" u 1:4 w l ls 1, "Riemann1D_theta1/it_478" u 1:4 w l ls 2, "Riemann1D_theta2/it_514" u 1:4 w l ls 3
+plot[0.3:0.7][-0.1:400] "Riemann1D_theta0/it_537" u 1:4 w l ls 1, "Riemann1D_theta1/it_484" u 1:4 w l ls 2, "Riemann1D_theta2/it_507" u 1:4 w l ls 3
 
 set output "Mach_Number1D.pdf"
 
-plot[0.3:0.7][-0.01:1.01] "Riemann1D_theta0/it_552" u 1:5 w l ls 1, "Riemann1D_theta1/it_478" u 1:5 w l ls 2, "Riemann1D_theta2/it_514" u 1:5 w l ls 3
+plot[0.3:0.7][-0.01:1.01] "Riemann1D_theta0/it_537" u 1:5 w l ls 1, "Riemann1D_theta1/it_484" u 1:5 w l ls 2, "Riemann1D_theta2/it_507" u 1:5 w l ls 3

@@ -165,21 +165,12 @@ void Probleme1D::Update_theta()
 
 void Probleme1D::Update_u_star()
 {
-  // _u_star[0] = 0.5*(_u[0] + _left_bound_u - (_Pi[0] - _left_bound_Pi)/_a[0]);
-  // for (int elem_j = 1; elem_j < _nbr_elements; elem_j++)
-  // {
-  //   _u_star[elem_j] = 0.5*(_u[elem_j] + _u[elem_j-1] - (_Pi[elem_j] - _Pi[elem_j-1])/_a[elem_j]);
-  // }
-  // _u_star[_nbr_elements] = 0.5*(_right_bound_u + _u[_nbr_elements-1] - (_right_bound_Pi - _Pi[_nbr_elements-1])/_a[_nbr_elements]);
-
-
-
-  _u_star[0] = 0.5*(_u[0] + _left_bound_u - _theta[0]*(_Pi[0] - _left_bound_Pi)/_a[0]);
+  _u_star[0] = 0.5*(_u[0] + _left_bound_u - (_Pi[0] - _left_bound_Pi)/_a[0]);
   for (int elem_j = 1; elem_j < _nbr_elements; elem_j++)
   {
-    _u_star[elem_j] = 0.5*(_u[elem_j] + _u[elem_j-1] - _theta[elem_j]*(_Pi[elem_j] - _Pi[elem_j-1])/_a[elem_j]);
+    _u_star[elem_j] = 0.5*(_u[elem_j] + _u[elem_j-1] - (_Pi[elem_j] - _Pi[elem_j-1])/_a[elem_j]);
   }
-  _u_star[_nbr_elements] = 0.5*(_right_bound_u + _u[_nbr_elements-1] - _theta[_nbr_elements]*(_right_bound_Pi - _Pi[_nbr_elements-1])/_a[_nbr_elements]);
+  _u_star[_nbr_elements] = 0.5*(_right_bound_u + _u[_nbr_elements-1] - (_right_bound_Pi - _Pi[_nbr_elements-1])/_a[_nbr_elements]);
 }
 
 void Probleme1D::Update_Pi_star()
@@ -375,12 +366,9 @@ void Probleme1D::TimeIteration(int time_it)
 
   AcousticStep();
 
-  SaveIteration(time_it);
-  time_it += 1;
+  Update_Phi_interface();
 
-  // Update_Phi_interface();
-  //
-  // TransportStep();
+  TransportStep();
 
   Update_u();
   Update_Pi();
