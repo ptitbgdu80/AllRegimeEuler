@@ -1,11 +1,11 @@
 #include "AREuler.h"
 
 //Constructeur
-Probleme1D::Probleme1D(int nbr_elements, double t_final, int choix_theta, std::string file_name)
+Problem1D::Problem1D(int nbr_elements, double t_final, int choice_theta, std::string file_name)
 {
   _nbr_elements = nbr_elements;
   _t_final = t_final;
-  _choix_theta = choix_theta;
+  _choice_theta = choice_theta;
   _file_name = file_name;
   _delta_x = 1.0/nbr_elements;
 
@@ -60,7 +60,7 @@ Probleme1D::Probleme1D(int nbr_elements, double t_final, int choix_theta, std::s
   Update_CL();
 
   //Initialisation des theta
-  switch (choix_theta)
+  switch (choice_theta)
   {
     case 0 :
     for (int elem_j = 0; elem_j < nbr_elements+1; elem_j++)
@@ -88,13 +88,13 @@ Probleme1D::Probleme1D(int nbr_elements, double t_final, int choix_theta, std::s
 
 
 //Destructeur
-Probleme1D::~Probleme1D()
+Problem1D::~Problem1D()
 {}
 
 
 
 //Methodes de la classe
-void Probleme1D::Update_u()
+void Problem1D::Update_u()
 {
   for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
   {
@@ -102,7 +102,7 @@ void Probleme1D::Update_u()
   }
 }
 
-void Probleme1D::Update_Pi()
+void Problem1D::Update_Pi()
 {
   for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
   {
@@ -110,7 +110,7 @@ void Probleme1D::Update_Pi()
   }
 }
 
-void Probleme1D::Update_a()
+void Problem1D::Update_a()
 {
   // a = 1.5*max(rho_L*c_L, rho_R*c_R) , c = sqrt(gamma*p/rho) => rho*c = sqrt(gamma*p*rho)
 
@@ -131,10 +131,10 @@ void Probleme1D::Update_a()
   _a[_nbr_elements] = K*std::max(rhoLcL, rhoRcR);
 }
 
-void Probleme1D::Update_theta()
+void Problem1D::Update_theta()
 {
   double cL, cR;
-  switch (_choix_theta)
+  switch (_choice_theta)
   {
     case 0 :
     case 1 :
@@ -163,7 +163,7 @@ void Probleme1D::Update_theta()
   }
 }
 
-void Probleme1D::Update_u_star()
+void Problem1D::Update_u_star()
 {
   _u_star[0] = 0.5*(_u[0] + _left_bound_u - (_Pi[0] - _left_bound_Pi)/_a[0]);
   for (int elem_j = 1; elem_j < _nbr_elements; elem_j++)
@@ -173,7 +173,7 @@ void Probleme1D::Update_u_star()
   _u_star[_nbr_elements] = 0.5*(_right_bound_u + _u[_nbr_elements-1] - (_right_bound_Pi - _Pi[_nbr_elements-1])/_a[_nbr_elements]);
 }
 
-void Probleme1D::Update_Pi_star()
+void Problem1D::Update_Pi_star()
 {
   _Pi_star[0] = 0.5*(_Pi[0] + _left_bound_Pi - _theta[0]*_a[0]*(_u[0] - _left_bound_u));
   for (int elem_j = 1; elem_j < _nbr_elements; elem_j++)
@@ -183,7 +183,7 @@ void Probleme1D::Update_Pi_star()
   _Pi_star[_nbr_elements] = 0.5*(_right_bound_Pi + _Pi[_nbr_elements-1] - _theta[_nbr_elements]*_a[_nbr_elements]*(_right_bound_u - _u[_nbr_elements-1]));
 }
 
-void Probleme1D::Update_L()
+void Problem1D::Update_L()
 {
   for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
   {
@@ -191,7 +191,7 @@ void Probleme1D::Update_L()
   }
 }
 
-void Probleme1D::Update_Phi_interface()
+void Problem1D::Update_Phi_interface()
 {
   if (_u_star[0] >= 0)
   {
@@ -224,7 +224,7 @@ void Probleme1D::Update_Phi_interface()
   }
 }
 
-void Probleme1D::Update_CL()
+void Problem1D::Update_CL()
 {
   _left_bound_Pi = _Pi[0];
   _right_bound_Pi = _Pi[_nbr_elements-1];
@@ -243,7 +243,7 @@ void Probleme1D::Update_CL()
   _right_bound_u = _right_bound_U[1]/_right_bound_U[0];
 }
 
-void Probleme1D::AcousticStep()
+void Problem1D::AcousticStep()
 {
   for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
   {
@@ -254,7 +254,7 @@ void Probleme1D::AcousticStep()
   }
 }
 
-void Probleme1D::TransportStep()
+void Problem1D::TransportStep()
 {
   for (int elem_j = 0; elem_j < _nbr_elements; elem_j++)
   {
@@ -265,7 +265,7 @@ void Probleme1D::TransportStep()
   }
 }
 
-void Probleme1D::SaveIteration(int time_it)
+void Problem1D::SaveIteration(int time_it)
 {
   if (time_it == 0)
   {
@@ -299,7 +299,8 @@ void Probleme1D::SaveIteration(int time_it)
     file << " " << velocity_mag;
     file << " " << velocity_mag/sound_speed;
 
-    file << " " << _a[elem_j] << " " << _u_star[elem_j] << " " << _Pi_star[elem_j] << " " << _L[elem_j];
+    file << " " << _U[elem_j][3];
+    // file << " " << _a[elem_j] << " " << _u_star[elem_j] << " " << _Pi_star[elem_j] << " " << _L[elem_j];
     file << std::endl;
   }
 
@@ -318,7 +319,7 @@ void Probleme1D::SaveIteration(int time_it)
   file.close();
 }
 
-void Probleme1D::TimeIteration(int time_it)
+void Problem1D::TimeIteration(int time_it)
 {
   Update_a();
   Update_u_star();
@@ -366,9 +367,9 @@ void Probleme1D::TimeIteration(int time_it)
 
   AcousticStep();
 
-  // Update_Phi_interface();
-  //
-  // TransportStep();
+  Update_Phi_interface();
+
+  TransportStep();
 
   Update_u();
   Update_Pi();
@@ -377,7 +378,7 @@ void Probleme1D::TimeIteration(int time_it)
   SaveIteration(time_it);
 }
 
-void Probleme1D::Solve()
+void Problem1D::Solve()
 {
   _time = 0.0;
   int time_it = 0;

@@ -7,7 +7,7 @@ int main()
   int choix_theta = 0;
   std::string file_name = "Riemann1D_theta" + std::to_string(choix_theta);
 
-  Probleme1D test(nbr_elements, t_final, choix_theta, file_name);
+  Problem1D test(nbr_elements, t_final, choix_theta, file_name);
 
   test.Solve();
 

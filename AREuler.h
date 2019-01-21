@@ -5,7 +5,7 @@
 #include <fstream>
 #include <string>
 
-class Probleme1D
+class Problem1D
 {
 
 protected:
@@ -13,11 +13,11 @@ protected:
   std::vector<double> _u, _u_star, _L, _Pi, _Pi_star, _left_bound_U, _right_bound_U, _a, _theta;
   double _nbr_elements, _delta_x, _Dt_on_Dx, _cfl, _time, _t_final, _left_bound_u, _right_bound_u, _left_bound_Pi, _right_bound_Pi, _down_bound_Pi, _up_bound_Pi;
   std::string _file_name;
-  int _choix_theta;
+  int _choice_theta;
 
 public:
-  Probleme1D(int nbr_elements, double t_final, int choix_theta, std::string file_name);
-  ~Probleme1D();
+  Problem1D(int nbr_elements, double t_final, int choice_theta, std::string file_name);
+  ~Problem1D();
   void Update_u();
   void Update_Pi();
   void Update_a();
@@ -34,20 +34,21 @@ public:
   void Solve();
 };
 
-class Probleme2D
+class Problem2D
 {
 
 protected:
-  std::vector<std::vector<std::vector<double>>> _U, _Phi_interface_LR, _Phi_interface_DU;
-  std::vector<std::vector<double>> _u, _v, _u_star, _v_star, _L, _Pi, _Pi_star_LR, _Pi_star_DU, _a_LR, _a_DU, _theta_LR, _theta_DU, _left_bound_U, _right_bound_U, _down_bound_U, _up_bound_U;
+  std::vector<std::vector<std::vector<double>>> _U, _Phi_interface_LR, _Phi_interface_DU, _flow_LR, _flow_DU, _Fx, _Fy;
+  std::vector<std::vector<double>> _u, _v, _u_star, _v_star, _L, _Pi, _Pi_star_LR, _Pi_star_DU, _a_LR, _a_DU, _theta_LR, _theta_DU;
+  std::vector<std::vector<double>> _left_bound_U, _right_bound_U, _down_bound_U, _up_bound_U, _max_c_LR, _max_c_DU, _left_bound_Fx, _right_bound_Fx, _down_bound_Fy, _up_bound_Fy;
   std::vector<double> _left_bound_u, _right_bound_u, _down_bound_v, _up_bound_v, _left_bound_Pi, _right_bound_Pi, _down_bound_Pi, _up_bound_Pi;
-  double _nbr_elements_1D, _delta_s, _Dt_on_Ds, _cfl, _time, _t_final;
+  double _nbr_elements_1D, _delta_s, _Dt_on_Ds, _cfl, _time, _t_final, _length;
   std::string _file_name;
-  int _choix_theta;
+  int _choice_theta, _choice_test_case, _choice_solver;
 
 public:
-  Probleme2D(int nbr_elements_1D, double t_final, int choix_theta, std::string file_name);
-  ~Probleme2D();
+  Problem2D(int nbr_elements_1D, double t_final, int choice_theta, std::string file_name, int choice_test_case, int choice_solver);
+  ~Problem2D();
   void Update_u_v_Pi();
   void Update_a_u_v_star();
   void Update_theta();
@@ -57,6 +58,10 @@ public:
   void Update_CL();
   void AcousticStep();
   void TransportStep();
+  void Update_F();
+  void Update_max_c();
+  void Update_flow();
+  void RusanovStep();
   void SaveIteration(int time_it);
   void TimeIteration(int time_it);
   void Solve();
