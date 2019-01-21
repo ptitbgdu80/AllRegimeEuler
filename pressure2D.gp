@@ -3,12 +3,12 @@
 
 #set output "Velocitymag.pdf"
 
-set term gif animate delay 100
+set term gif animate delay 1
 
 set output "pressure2.gif"
 
-set cbrange[0:0.4]
+#set cbrange[0:3]
 
-do for [j=0:2] {
-  plot[-0.1:1.1][-0.1:1.1] sprintf("debug2D/debug2D%i",j) u 1:2:4 with image title sprintf("%i",j)
+do for [j=0:100] {
+  plot[0.35:0.6][0.35:0.6] sprintf("debug2D/debug2D%i",5*j) u 1:2:5 with image title sprintf("%i",5*j)
 ;}

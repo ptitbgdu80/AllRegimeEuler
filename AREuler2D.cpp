@@ -85,29 +85,7 @@ Probleme2D::Probleme2D(int nbr_elements_1D, double t_final, int choix_theta, std
 
   //Conditions initiales
 
-  double pi = 3.141592653589793;
-  for (int line = 0; line < nbr_elements_1D; line++)
-  {
-    for (int column = 0; column < nbr_elements_1D; column++)
-    {
-      double x ,y ,rho, u, v, p;
-      x = (column + 0.5)*_delta_s;
-      y = (line + 0.5)*_delta_s;
-      rho = 1.0 - 0.5*tanh(y - 0.5);
-      u = 2*pow(sin(pi*x),2)*sin(pi*y)*cos(pi*y);
-      v = -2*sin(pi*x)*cos(pi*x)*pow(sin(pi*y),2);
-      p = 1.0e3;
-      _u[line][column] = u;
-      _v[line][column] = v;
-      _Pi[line][column] = p;
-
-      _U[line][column][0] = rho;
-      _U[line][column][1] = rho*u;
-      _U[line][column][2] = rho*v;
-      _U[line][column][3] = PressureToRhoE2D(p, _U[line][column][0], _U[line][column][1], _U[line][column][2]);
-    }
-  }
-
+  // double pi = 3.141592653589793;
   // for (int line = 0; line < nbr_elements_1D; line++)
   // {
   //   for (int column = 0; column < nbr_elements_1D; column++)
@@ -115,38 +93,10 @@ Probleme2D::Probleme2D(int nbr_elements_1D, double t_final, int choix_theta, std
   //     double x ,y ,rho, u, v, p;
   //     x = (column + 0.5)*_delta_s;
   //     y = (line + 0.5)*_delta_s;
-  //     if (x < 0.5)
-  //     {
-  //       if (y < 0.5)
-  //       {
-  //         rho = 0.138;
-  //         u = 1.206;
-  //         v = 1.206;
-  //         p = 0.029;
-  //       }
-  //       else
-  //       {
-  //         rho = 0.5323;
-  //         u = 1.206;
-  //         v = 0.0;
-  //         p = 0.3;
-  //       }
-  //     }
-  //     else if (y < 0.5)
-  //     {
-  //       rho = 0.5323;
-  //       u = 0.0;
-  //       v = 1.206;
-  //       p = 0.3;
-  //     }
-  //     else
-  //     {
-  //       rho = 1.5;
-  //       u = 0.0;
-  //       v = 0.0;
-  //       p = 1.5;
-  //     }
-  //
+  //     rho = 1.0 - 0.5*tanh(y - 0.5);
+  //     u = 2*pow(sin(pi*x),2)*sin(pi*y)*cos(pi*y);
+  //     v = -2*sin(pi*x)*cos(pi*x)*pow(sin(pi*y),2);
+  //     p = 1.0e3;
   //     _u[line][column] = u;
   //     _v[line][column] = v;
   //     _Pi[line][column] = p;
@@ -157,6 +107,56 @@ Probleme2D::Probleme2D(int nbr_elements_1D, double t_final, int choix_theta, std
   //     _U[line][column][3] = PressureToRhoE2D(p, _U[line][column][0], _U[line][column][1], _U[line][column][2]);
   //   }
   // }
+
+  for (int line = 0; line < nbr_elements_1D; line++)
+  {
+    for (int column = 0; column < nbr_elements_1D; column++)
+    {
+      double x ,y ,rho, u, v, p;
+      x = (column + 0.5)*_delta_s;
+      y = (line + 0.5)*_delta_s;
+      if (x < 0.5)
+      {
+        if (y < 0.5)
+        {
+          rho = 0.138;
+          u = 1.206;
+          v = 1.206;
+          p = 0.029;
+        }
+        else
+        {
+          rho = 0.5323;
+          u = 1.206;
+          v = 0.0;
+          p = 0.3;
+        }
+      }
+      else if (y < 0.5)
+      {
+        rho = 0.5323;
+        u = 0.0;
+        v = 1.206;
+        p = 0.3;
+      }
+      else
+      {
+        rho = 1.5;
+        u = 0.0;
+        v = 0.0;
+        p = 1.5;
+      }
+
+      _u[line][column] = u;
+      _v[line][column] = v;
+      _Pi[line][column] = p;
+
+      _U[line][column][0] = rho;
+      _U[line][column][1] = rho*u;
+      _U[line][column][2] = rho*v;
+      _U[line][column][3] = PressureToRhoE2D(p, _U[line][column][0], _U[line][column][1], _U[line][column][2]);
+    }
+  }
 
   //Conditions aux bords
   Update_CL();
@@ -226,7 +226,7 @@ void Probleme2D::Update_u_v_Pi()
     {
       _u[line][column] = _U[line][column][1]/_U[line][column][0];
       _v[line][column] = _U[line][column][2]/_U[line][column][0];
-      _Pi[line][column] = 0.4*(_U[line][column][3] - 0.5*(_u[line][column]*_u[line][column] + _v[line][column]*_v[line][column]));
+      _Pi[line][column] = 0.4*(_U[line][column][3] - 0.5*_U[line][column][0]*(_u[line][column]*_u[line][column] + _v[line][column]*_v[line][column]));
       if (_Pi[line][column] < 0)
       {
         std::cout << "Attention pression négative pour l'élément " << line << ", " << column << std::endl;
@@ -443,39 +443,6 @@ void Probleme2D::Update_Phi_interface()
 
 void Probleme2D::Update_CL()
 {
-  for (int index = 0; index < _nbr_elements_1D; index++)
-  {
-    _left_bound_Pi[index] = _Pi[index][0];
-    _right_bound_Pi[index] = _Pi[index][_nbr_elements_1D-1];
-    _down_bound_Pi[index] = _Pi[0][index];
-    _up_bound_Pi[index] = _Pi[_nbr_elements_1D-1][index];
-
-    _left_bound_U[index][0] = _U[index][0][0];
-    _left_bound_U[index][1] = 0.0;
-    _left_bound_U[index][2] = 0.0;
-    _left_bound_U[index][3] = PressureToRhoE(_left_bound_Pi[index], _left_bound_U[index][0], 0, 0);
-
-    _right_bound_U[index][0] = _U[index][_nbr_elements_1D-1][0];
-    _right_bound_U[index][1] = 0.0;
-    _right_bound_U[index][2] = 0.0;
-    _right_bound_U[index][3] = PressureToRhoE(_right_bound_Pi[index], _right_bound_U[index][0], 0, 0);
-
-    _down_bound_U[index][0] = _U[0][index][0];
-    _down_bound_U[index][1] = 0.0;
-    _down_bound_U[index][2] = 0.0;
-    _down_bound_U[index][3] = PressureToRhoE(_down_bound_Pi[index], _down_bound_U[index][0], 0, 0);
-
-    _up_bound_U[index][0] = _U[_nbr_elements_1D-1][index][0];
-    _up_bound_U[index][1] = 0.0;
-    _up_bound_U[index][2] = 0.0;
-    _up_bound_U[index][3] = PressureToRhoE(_up_bound_Pi[index], _up_bound_U[index][0], 0, 0);
-
-    _left_bound_u[index] = 0.0;
-    _right_bound_u[index] = 0.0;
-    _down_bound_v[index] = 0.0;
-    _up_bound_v[index] = 0.0;
-  }
-
   // for (int index = 0; index < _nbr_elements_1D; index++)
   // {
   //   _left_bound_Pi[index] = _Pi[index][0];
@@ -484,30 +451,63 @@ void Probleme2D::Update_CL()
   //   _up_bound_Pi[index] = _Pi[_nbr_elements_1D-1][index];
   //
   //   _left_bound_U[index][0] = _U[index][0][0];
-  //   _left_bound_U[index][1] = _U[index][0][1];
-  //   _left_bound_U[index][2] = _U[index][0][2];
-  //   _left_bound_U[index][3] = PressureToRhoE(_left_bound_Pi[index], _left_bound_U[index][0], _left_bound_U[index][1], _left_bound_U[index][2]);
+  //   _left_bound_U[index][1] = 0.0;
+  //   _left_bound_U[index][2] = 0.0;
+  //   _left_bound_U[index][3] = PressureToRhoE(_left_bound_Pi[index], _left_bound_U[index][0], 0, 0);
   //
   //   _right_bound_U[index][0] = _U[index][_nbr_elements_1D-1][0];
-  //   _right_bound_U[index][1] = _U[index][_nbr_elements_1D-1][1];
-  //   _right_bound_U[index][2] = _U[index][_nbr_elements_1D-1][2];
-  //   _right_bound_U[index][3] = PressureToRhoE(_right_bound_Pi[index], _right_bound_U[index][0], _right_bound_U[index][1], _right_bound_U[index][2]);
+  //   _right_bound_U[index][1] = 0.0;
+  //   _right_bound_U[index][2] = 0.0;
+  //   _right_bound_U[index][3] = PressureToRhoE(_right_bound_Pi[index], _right_bound_U[index][0], 0, 0);
   //
   //   _down_bound_U[index][0] = _U[0][index][0];
-  //   _down_bound_U[index][1] = _U[0][index][1];
-  //   _down_bound_U[index][2] = _U[0][index][2];
-  //   _down_bound_U[index][3] = PressureToRhoE(_down_bound_Pi[index], _down_bound_U[index][0], _down_bound_U[index][1], _down_bound_U[index][2]);
+  //   _down_bound_U[index][1] = 0.0;
+  //   _down_bound_U[index][2] = 0.0;
+  //   _down_bound_U[index][3] = PressureToRhoE(_down_bound_Pi[index], _down_bound_U[index][0], 0, 0);
   //
   //   _up_bound_U[index][0] = _U[_nbr_elements_1D-1][index][0];
-  //   _up_bound_U[index][1] = _U[_nbr_elements_1D-1][index][1];
-  //   _up_bound_U[index][2] = _U[_nbr_elements_1D-1][index][2];
-  //   _up_bound_U[index][3] = PressureToRhoE(_up_bound_Pi[index], _up_bound_U[index][0], _up_bound_U[index][1], _up_bound_U[index][2]);
+  //   _up_bound_U[index][1] = 0.0;
+  //   _up_bound_U[index][2] = 0.0;
+  //   _up_bound_U[index][3] = PressureToRhoE(_up_bound_Pi[index], _up_bound_U[index][0], 0, 0);
   //
-  //   _left_bound_u[index] = _u[index][0];
-  //   _right_bound_u[index] = _u[index][_nbr_elements_1D-1];
-  //   _down_bound_v[index] = _v[0][index];
-  //   _up_bound_v[index] = _v[_nbr_elements_1D-1][index];
+  //   _left_bound_u[index] = 0.0;
+  //   _right_bound_u[index] = 0.0;
+  //   _down_bound_v[index] = 0.0;
+  //   _up_bound_v[index] = 0.0;
   // }
+
+  for (int index = 0; index < _nbr_elements_1D; index++)
+  {
+    _left_bound_Pi[index] = _Pi[index][0];
+    _right_bound_Pi[index] = _Pi[index][_nbr_elements_1D-1];
+    _down_bound_Pi[index] = _Pi[0][index];
+    _up_bound_Pi[index] = _Pi[_nbr_elements_1D-1][index];
+
+    _left_bound_U[index][0] = _U[index][0][0];
+    _left_bound_U[index][1] = _U[index][0][1];
+    _left_bound_U[index][2] = _U[index][0][2];
+    _left_bound_U[index][3] = PressureToRhoE(_left_bound_Pi[index], _left_bound_U[index][0], _left_bound_U[index][1], _left_bound_U[index][2]);
+
+    _right_bound_U[index][0] = _U[index][_nbr_elements_1D-1][0];
+    _right_bound_U[index][1] = _U[index][_nbr_elements_1D-1][1];
+    _right_bound_U[index][2] = _U[index][_nbr_elements_1D-1][2];
+    _right_bound_U[index][3] = PressureToRhoE(_right_bound_Pi[index], _right_bound_U[index][0], _right_bound_U[index][1], _right_bound_U[index][2]);
+
+    _down_bound_U[index][0] = _U[0][index][0];
+    _down_bound_U[index][1] = _U[0][index][1];
+    _down_bound_U[index][2] = _U[0][index][2];
+    _down_bound_U[index][3] = PressureToRhoE(_down_bound_Pi[index], _down_bound_U[index][0], _down_bound_U[index][1], _down_bound_U[index][2]);
+
+    _up_bound_U[index][0] = _U[_nbr_elements_1D-1][index][0];
+    _up_bound_U[index][1] = _U[_nbr_elements_1D-1][index][1];
+    _up_bound_U[index][2] = _U[_nbr_elements_1D-1][index][2];
+    _up_bound_U[index][3] = PressureToRhoE(_up_bound_Pi[index], _up_bound_U[index][0], _up_bound_U[index][1], _up_bound_U[index][2]);
+
+    _left_bound_u[index] = _u[index][0];
+    _right_bound_u[index] = _u[index][_nbr_elements_1D-1];
+    _down_bound_v[index] = _v[0][index];
+    _up_bound_v[index] = _v[_nbr_elements_1D-1][index];
+  }
 
 }
 
@@ -614,6 +614,7 @@ void Probleme2D::SaveIteration(int time_it)
       sound_speed = sqrt(1.4*_Pi[line][column]/_U[line][column][0]);
       file << " " << velocity_mag;
       file << " " << velocity_mag/sound_speed;
+      file << " " << _a_LR[line][column] << " " << _u_star[line][column] << " " << _Pi_star_LR[line][column] << " " << _L[line][column];
       file << std::endl;
     }
 

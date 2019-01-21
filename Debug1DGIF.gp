@@ -1,6 +1,6 @@
 n=1700
 reset
-set term gif animate delay 3
+set term gif animate delay 1
 
 set style line 1 lt rgb "#DB0000" lw 2 # m Rouge
 set style line 2 lt rgb "#00009E" lw 2 # f Bleu foncé
@@ -23,5 +23,5 @@ set cbrange[0.09:1.01]
 #;}
 
 do for [j=0:n] {
-  plot[0.3:0.7][0:800] sprintf("debug1D/it_%i",j) u 1:6 w l ls 1 title sprintf("%i",j)
+  plot[0.3:0.7][0.09:1.01] sprintf("debug1D/it_%i",3*j) u 1:2 w l ls 1 title sprintf("%i",3*j)
 ;}

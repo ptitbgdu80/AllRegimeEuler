@@ -366,9 +366,9 @@ void Probleme1D::TimeIteration(int time_it)
 
   AcousticStep();
 
-  Update_Phi_interface();
-
-  TransportStep();
+  // Update_Phi_interface();
+  //
+  // TransportStep();
 
   Update_u();
   Update_Pi();
