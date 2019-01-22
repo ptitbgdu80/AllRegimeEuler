@@ -37,7 +37,7 @@ Problem1D::Problem1D(int nbr_elements, double t_final, int choice_theta, std::st
 
     else
     {
-      rho = 0.1;
+      rho = 0.125;
       u = 0.0;
       v = 0.0;
       p = 1.0e4;

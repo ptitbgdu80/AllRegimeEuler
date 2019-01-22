@@ -28,7 +28,7 @@ $(PROG1D) : $(SRC1D0) $(SRC1D1) $(SRC1D2)
 	$(CC) $(FLAGS) $(SRC1D2) -o run2
 	./run2
 	rm -f *.o *~ $(PROG1D)
-	gnuplot finalSolution1D.gp
+	# gnuplot finalSolution1D.gp
 
 
 # Supprime l'exécutable, les fichiers binaires (.o) et les fichiers

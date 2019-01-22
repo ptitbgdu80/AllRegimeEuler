@@ -283,7 +283,7 @@ Problem2D::Problem2D(int nbr_elements_1D, double t_final, int choice_theta, std:
         }
         else
         {
-          rho = 0.1;
+          rho = 0.125;
           u = 0.0;
           v = 0.0;
           p = 1.0e4;
