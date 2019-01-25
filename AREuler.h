@@ -63,6 +63,7 @@ public:
   void Update_flow();
   void RusanovStep();
   void SaveIteration(int time_it);
+  void SaveCutsForRiemann2D();
   void TimeIteration(int time_it);
   void Solve();
 };

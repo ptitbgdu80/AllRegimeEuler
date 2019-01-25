@@ -604,21 +604,21 @@ void Problem2D::Update_CL()
 
       _left_bound_U[index][0] = _U[index][0][0];
       _left_bound_U[index][1] = 0.0;
-      _left_bound_U[index][2] = 0.0;
+      _left_bound_U[index][2] = _U[index][0][2];
       _left_bound_U[index][3] = PressureToRhoE(_left_bound_Pi[index], _left_bound_U[index][0], 0, 0);
 
       _right_bound_U[index][0] = _U[index][_nbr_elements_1D-1][0];
       _right_bound_U[index][1] = 0.0;
-      _right_bound_U[index][2] = 0.0;
+      _right_bound_U[index][2] = _U[index][_nbr_elements_1D-1][2];
       _right_bound_U[index][3] = PressureToRhoE(_right_bound_Pi[index], _right_bound_U[index][0], 0, 0);
 
       _down_bound_U[index][0] = _U[0][index][0];
-      _down_bound_U[index][1] = 0.0;
+      _down_bound_U[index][1] = _U[0][index][1];
       _down_bound_U[index][2] = 0.0;
       _down_bound_U[index][3] = PressureToRhoE(_down_bound_Pi[index], _down_bound_U[index][0], 0, 0);
 
       _up_bound_U[index][0] = _U[_nbr_elements_1D-1][index][0];
-      _up_bound_U[index][1] = 0.0;
+      _up_bound_U[index][1] = _U[_nbr_elements_1D-1][index][1];
       _up_bound_U[index][2] = 0.0;
       _up_bound_U[index][3] = PressureToRhoE(_up_bound_Pi[index], _up_bound_U[index][0], 0, 0);
 
@@ -1019,6 +1019,81 @@ void Problem2D::SaveIteration(int time_it)
   file.close();
 }
 
+void Problem2D::SaveCutsForRiemann2D()
+{
+  std::ofstream file;
+  file.open(_file_name + "/y=x", std::ios::out);
+
+  file << "# état du système à t = " << _time << std::endl;
+  file << -0.5*_delta_s;
+  file << " " << _left_bound_U[0][0];
+  file << " " << _left_bound_Pi[0];
+  double velocity_mag = sqrt(_left_bound_U[0][1]*_left_bound_U[0][1] + _left_bound_U[0][2]*_left_bound_U[0][2])/_left_bound_U[0][0];
+  double sound_speed = sqrt(1.4*_left_bound_Pi[0]/_left_bound_U[0][0]);
+  file << " " << velocity_mag;
+  file << " " << velocity_mag/sound_speed;
+  file << std::endl;
+
+  for (int index = 0; index < _nbr_elements_1D; index++)
+  {
+    file << (index + 0.5)*_delta_s;
+    file << " " << _U[index][index][0];
+    file << " " << _Pi[index][index];
+    velocity_mag = sqrt(_U[index][index][1]*_U[index][index][1] + _U[index][index][2]*_U[index][index][2])/_U[index][index][0];
+    sound_speed = sqrt(1.4*_Pi[index][index]/_U[index][index][0]);
+    file << " " << velocity_mag;
+    file << " " << velocity_mag/sound_speed;
+    file << std::endl;
+  }
+
+  file << _length + 0.5*_delta_s;
+  file << " " << _right_bound_U[_nbr_elements_1D-1][0];
+  file << " " << _right_bound_Pi[_nbr_elements_1D-1];
+  velocity_mag = sqrt(_right_bound_U[_nbr_elements_1D-1][1]*_right_bound_U[_nbr_elements_1D-1][1] + _right_bound_U[_nbr_elements_1D-1][2]*_right_bound_U[_nbr_elements_1D-1][2])/_right_bound_U[_nbr_elements_1D-1][0];
+  sound_speed = sqrt(1.4*_right_bound_Pi[_nbr_elements_1D-1]/_right_bound_U[_nbr_elements_1D-1][0]);
+  file << " " << velocity_mag;
+  file << " " << velocity_mag/sound_speed;
+  file << std::endl;
+
+  file.close();
+
+  file.open(_file_name + "/x=0.75", std::ios::out);
+
+  file << "# état du système à t = " << _time << std::endl;
+  int line = (3*_nbr_elements_1D)/4;
+  file << -0.5*_delta_s;
+  file << " " << _left_bound_U[line][0];
+  file << " " << _left_bound_Pi[line];
+  velocity_mag = sqrt(_left_bound_U[line][1]*_left_bound_U[line][1] + _left_bound_U[line][2]*_left_bound_U[line][2])/_left_bound_U[line][0];
+  sound_speed = sqrt(1.4*_left_bound_Pi[line]/_left_bound_U[line][0]);
+  file << " " << velocity_mag;
+  file << " " << velocity_mag/sound_speed;
+  file << std::endl;
+
+  for (int column = 0; column < _nbr_elements_1D; column++)
+  {
+    file << (column + 0.5)*_delta_s;
+    file << " " << _U[line][column][0];
+    file << " " << _Pi[line][column];
+    velocity_mag = sqrt(_U[line][column][1]*_U[line][column][1] + _U[line][column][2]*_U[line][column][2])/_U[line][column][0];
+    sound_speed = sqrt(1.4*_Pi[line][column]/_U[line][column][0]);
+    file << " " << velocity_mag;
+    file << " " << velocity_mag/sound_speed;
+    file << std::endl;
+  }
+
+  file << _length + 0.5*_delta_s;
+  file << " " << _right_bound_U[line][0];
+  file << " " << _right_bound_Pi[line];
+  velocity_mag = sqrt(_right_bound_U[line][1]*_right_bound_U[line][1] + _right_bound_U[line][2]*_right_bound_U[line][2])/_right_bound_U[line][0];
+  sound_speed = sqrt(1.4*_right_bound_Pi[line]/_right_bound_U[line][0]);
+  file << " " << velocity_mag;
+  file << " " << velocity_mag/sound_speed;
+  file << std::endl;
+
+  file.close();
+}
+
 void Problem2D::TimeIteration(int time_it)
 {
   double max_for_cfl, buffer;
@@ -1060,7 +1135,7 @@ void Problem2D::TimeIteration(int time_it)
       }
     }
 
-    _Dt_on_Ds = std::min(_cfl/(4*max_for_cfl),_Dt_on_Ds);
+    _Dt_on_Ds = std::min(_cfl/(8*max_for_cfl),_Dt_on_Ds);
     _time += _Dt_on_Ds*_delta_s;
 
     Update_L();
@@ -1101,7 +1176,7 @@ void Problem2D::TimeIteration(int time_it)
 
   Update_u_v_Pi();
   Update_CL();
-  if (time_it%20 == 0)
+  if (time_it%50 == 0)
   {
     SaveIteration(time_it);
   }
@@ -1118,6 +1193,13 @@ void Problem2D::Solve()
   {
     time_it += 1;
     TimeIteration(time_it);
+  }
+
+  SaveIteration(time_it); //Sauvegarde la dernière itération (elle est supprimée puis réécrite si elle avait déjà été sauvegardée)
+
+  if (_choice_test_case == 1)
+  {
+    SaveCutsForRiemann2D();
   }
 
   std::cout << "t_final = " << _t_final << " atteint en " << time_it << " itérations" << std::endl;
